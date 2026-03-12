@@ -235,7 +235,7 @@
   <div class="pg-hdr">
     <div>
       <div class="pg-title">Bay College Decision Tool</div>
-      <div class="pg-sub">Adjust factor weights to rank schools in real time. Add or remove schools below.</div>
+      <div class="pg-sub">Add schools using the lookup below, then adjust the factor weights to rank them in real time.</div>
     </div>
     <span class="tag" id="pg-tag"></span>
   </div>
@@ -323,17 +323,7 @@ const PRESETS=[
   {label:'Close home', w:{cost:3,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:4,spirit:3,weather:4,proximity:5}},
 ];
 
-const DEFAULT_SCHOOLS=[
-  {name:'UC Santa Barbara',short:'UCSB',color:'#3B6D11',badge:'CA in-state rates',note:'Beach campus · 300 sunny days · 100 mi from SF',detail:'Public research university on the Pacific coast. Nobel Prize-winning faculty. #40 US News National Universities. Closest to SF of all 9 schools.',scores:{cost:4,academics:5,classes:3,gradRate:4,safety:3,housing:3,diversity:5,spirit:4,weather:5,proximity:5}},
-  {name:'University of Richmond',short:'Richmond',color:'#534AB7',badge:null,note:'7:1 ratio · #22 Liberal Arts · Jepson Leadership',detail:'Small private liberal arts college in Richmond, VA. Only undergrad leadership school in the US. 100% need-blind, meets 100% of demonstrated need.',scores:{cost:2,academics:4,classes:5,gradRate:4,safety:5,housing:5,diversity:3,spirit:5,weather:4,proximity:2}},
-  {name:'Northeastern University',short:'Northeastern',color:'#A32D2D',badge:null,note:'Co-op program · 92% placement · Boston',detail:'Major private research university in Boston. Famous co-op program integrates 6-month paid internships. 92% employed or in grad school within 6 months.',scores:{cost:2,academics:5,classes:3,gradRate:5,safety:4,housing:4,diversity:5,spirit:4,weather:2,proximity:2}},
-  {name:'Miami of Ohio',short:'Miami OH',color:'#C04A25',badge:'$18K/yr merit',note:'#1 Ohio public grad rate · Top housing & food',detail:'Public university in Oxford, OH. $18K/yr merit scholarship confirmed. #1 graduation rate among Ohio public universities.',scores:{cost:4,academics:3,classes:3,gradRate:3,safety:5,housing:5,diversity:2,spirit:4,weather:2,proximity:3}},
-  {name:'Lehigh University',short:'Lehigh',color:'#b04070',badge:null,note:'$74K avg salary · 80% 4-yr grad rate · R1',detail:'Private research university in Bethlehem, PA. R1 Carnegie designation. WSJ #14 for student outcomes. $74K average starting salary.',scores:{cost:2,academics:4,classes:4,gradRate:5,safety:4,housing:4,diversity:3,spirit:4,weather:2,proximity:2}},
-  {name:'University of Rochester',short:'Rochester',color:'#1a6fb5',badge:'$3.5K/yr grant',note:'Open curriculum · AAU member · #46 US News',detail:'Private research university in Rochester, NY. Open curriculum — no core requirements. AAU member. $3,500/yr research grant confirmed.',scores:{cost:2,academics:5,classes:4,gradRate:4,safety:3,housing:4,diversity:4,spirit:3,weather:1,proximity:3}},
-  {name:'CU Boulder',short:'CU Boulder',color:'#B07010',badge:null,note:'D-I Big 12 · Mountain setting · 2.5 hr from SF',detail:'Large flagship public in Boulder, CO. Stunning Rocky Mountain campus. Strong engineering, aerospace, and environmental science.',scores:{cost:3,academics:4,classes:1,gradRate:2,safety:4,housing:4,diversity:2,spirit:5,weather:4,proximity:4}},
-  {name:'Skidmore College',short:'Skidmore',color:'#6b64cc',badge:null,note:'8:1 ratio · Saratoga Springs · Creative curriculum',detail:'Small private liberal arts college in Saratoga Springs, NY. 8:1 student-faculty ratio. Strong arts, writing, and interdisciplinary programs.',scores:{cost:1,academics:3,classes:5,gradRate:4,safety:5,housing:5,diversity:3,spirit:3,weather:1,proximity:2}},
-  {name:'Clark University',short:'Clark',color:'#0f7a5a',badge:'$40K/yr merit',note:'Lowest net cost · Free 5th-year master\'s',detail:'Small research university in Worcester, MA. $40K/yr merit scholarship — lowest net cost. Free 5th-year accelerated master\'s degree.',scores:{cost:5,academics:3,classes:4,gradRate:3,safety:2,housing:3,diversity:4,spirit:2,weather:2,proximity:2}},
-];
+const DEFAULT_SCHOOLS=[];
 
 const TPL_HDR='name,short,color,badge,note,detail,cost,academics,classes,gradRate,safety,housing,diversity,spirit,weather,proximity';
 const TPL_ROWS=[
@@ -554,6 +544,12 @@ function adjPW(key,delta){
   renderRanking();
 }
 function renderRanking(){
+  if(schools.length===0){
+    document.getElementById('ranking').innerHTML=`<div style="text-align:center;padding:2rem 1rem;color:var(--t3);font-size:13px;line-height:1.7">
+      No schools yet.<br>Type a college name above and click <strong style="color:var(--ac)">Look up school</strong> to get started.
+    </div>`;
+    return;
+  }
   const sorted=[...schools].sort((a,b)=>score(b)-score(a));
   const top=score(sorted[0])||1;
   document.getElementById('ranking').innerHTML=sorted.map((s,i)=>{
