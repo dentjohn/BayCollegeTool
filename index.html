@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bay College Decision Tool</title>
+<title>College Decision Tool</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -122,6 +122,28 @@
   .pips{display:flex;justify-content:center;gap:2px}
   .pip{width:6px;height:6px;border-radius:1px;background:var(--bg3)}
 
+  /* personal rating section in left panel */
+  .personal-divider{margin:1rem 0 .75rem;padding-top:.75rem;border-top:0.5px solid var(--bd)}
+  .personal-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#b07a00;margin-bottom:.6rem}
+  .fr-personal .fn{color:#7a5500}
+  @media(prefers-color-scheme:dark){.personal-lbl{color:#e9b84a}.fr-personal .fn{color:#d4a030}}
+
+  /* personal rating cards inside detail panel */
+  .q-cards{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .q-card{background:#fffbec;border:0.5px solid #e8d98a;border-radius:8px;padding:10px 12px}
+  @media(prefers-color-scheme:dark){.q-card{background:#2a2410;border-color:#5a4a10}}
+  .q-icon{font-size:15px;margin-right:5px}
+  .q-title{font-size:12px;font-weight:600;color:#7a5500;margin-bottom:2px}
+  @media(prefers-color-scheme:dark){.q-title{color:#d4a030}}
+  .q-hint{font-size:10px;color:var(--t3);margin-bottom:8px;line-height:1.5}
+  .star-row{display:flex;gap:5px;align-items:center}
+  .star-btn{width:28px;height:28px;border-radius:6px;border:0.5px solid #d4b84a;background:#fff8d6;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;font-weight:700;color:#b07a00}
+  @media(prefers-color-scheme:dark){.star-btn{background:#332800;border-color:#5a4a10;color:#d4a030}}
+  .star-btn.active{background:#f5c842;border-color:#c9a020;color:#5a3800}
+  .star-btn:hover{background:#ffe066;border-color:#c9a020}
+  .star-val{font-size:11px;color:var(--t3);margin-left:6px;min-width:50px}
+  .star-unset{font-size:10px;color:var(--t3);font-style:italic}
+
   /* modal */
   .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
   .modal-ov.hidden{display:none}
@@ -231,7 +253,7 @@
     <div class="card rp">
       <div class="rk-hdr">
         <div class="sec-lbl" style="margin:0">Ranking</div>
-        <div style="font-size:11px;color:var(--t3)">Hover to remove · Click for details</div>
+        <div style="font-size:11px;color:var(--t3)">Click to rate · Hover to remove</div>
       </div>
       <div id="ranking"></div>
     </div>
@@ -254,14 +276,18 @@ const FACTORS=[
   {key:'spirit',label:'School spirit'},
   {key:'weather',label:'Good weather'},
   {key:'proximity',label:'Close to home'},
+  {key:'growth',label:'Will push me to grow',personal:true,icon:'🎓',
+   hint:'Research opportunities, open curriculum, access to Eastman School of Music, strong pre-med/grad school pipeline.'},
+  {key:'comfort',label:'Feels most comfortable',personal:true,icon:'💙',
+   hint:'How did it feel on your visit? Campus vibe, student culture, proximity to home, gut feeling.'},
 ];
 
 const PRESETS=[
-  {label:'Balanced',   w:{cost:4,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2}},
-  {label:'Value',      w:{cost:5,academics:3,classes:3,gradRate:4,safety:2,housing:2,diversity:2,spirit:2,weather:1,proximity:1}},
-  {label:'Academic',   w:{cost:2,academics:5,classes:5,gradRate:5,safety:3,housing:2,diversity:3,spirit:1,weather:1,proximity:1}},
-  {label:'Social',     w:{cost:2,academics:3,classes:2,gradRate:2,safety:4,housing:5,diversity:4,spirit:5,weather:4,proximity:3}},
-  {label:'Close home', w:{cost:3,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:4,spirit:3,weather:4,proximity:5}},
+  {label:'Balanced',   w:{cost:4,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2,growth:3,comfort:3}},
+  {label:'Value',      w:{cost:5,academics:3,classes:3,gradRate:4,safety:2,housing:2,diversity:2,spirit:2,weather:1,proximity:1,growth:2,comfort:2}},
+  {label:'Academic',   w:{cost:2,academics:5,classes:5,gradRate:5,safety:3,housing:2,diversity:3,spirit:1,weather:1,proximity:1,growth:5,comfort:2}},
+  {label:'Social',     w:{cost:2,academics:3,classes:2,gradRate:2,safety:4,housing:5,diversity:4,spirit:5,weather:4,proximity:3,growth:2,comfort:5}},
+  {label:'Close home', w:{cost:3,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:4,spirit:3,weather:4,proximity:5,growth:3,comfort:4}},
 ];
 
 const DEFAULT_SCHOOLS=[
@@ -284,7 +310,8 @@ const TPL_ROWS=[
 const TEMPLATE_CSV=[TPL_HDR,...TPL_ROWS].join('\n');
 
 let schools=DEFAULT_SCHOOLS.map(s=>({...s}));
-const weights={cost:4,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2};
+const weights={cost:4,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2,growth:3,comfort:3};
+let personalRatings={};  // { schoolName: { growth: null|1-5, comfort: null|1-5 } }
 let activePreset=0;
 let openSchool=null;
 
@@ -337,7 +364,7 @@ async function addSchool(){
   document.getElementById('add-err').textContent='';
   showLoadingRow(name);
   try{
-    const res=await fetch('/.netlify/functions/claude-proxy',{
+    const res=await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name)}]})
@@ -438,14 +465,22 @@ function sl(line){
 }
 function setUpSt(cls,msg){const el=document.getElementById('up-status');el.className='up-st '+cls;el.textContent=msg;}
 function resetData(){
-  schools=DEFAULT_SCHOOLS.map(s=>({...s}));openSchool=null;
+  schools=DEFAULT_SCHOOLS.map(s=>({...s}));openSchool=null;personalRatings={};
   setUpSt('s-def','No file loaded');
   document.getElementById('reset-btn').style.display='none';
   renderRanking();updateTag();
 }
 
 /* ── Scoring / rendering ── */
-function score(s){return FACTORS.reduce((t,f)=>t+s.scores[f.key]*weights[f.key],0);}
+function getPersonal(name,key){
+  return (personalRatings[name]&&personalRatings[name][key]!=null)?personalRatings[name][key]:0;
+}
+function score(s){
+  return FACTORS.reduce((t,f)=>{
+    const v=f.personal?getPersonal(s.name,f.key):(s.scores[f.key]||0);
+    return t+v*weights[f.key];
+  },0);
+}
 
 function renderPresets(){
   document.getElementById('presets').innerHTML=PRESETS.map((p,i)=>
@@ -454,9 +489,19 @@ function renderPresets(){
 }
 function applyPreset(i){Object.assign(weights,PRESETS[i].w);activePreset=i;renderSliders();renderRanking();renderPresets();}
 function renderSliders(){
-  document.getElementById('sliders').innerHTML=FACTORS.map(f=>`
+  const std=FACTORS.filter(f=>!f.personal);
+  const per=FACTORS.filter(f=>f.personal);
+  document.getElementById('sliders').innerHTML=
+    std.map(f=>`
     <div class="fr${weights[f.key]===0?' off':''}" id="fr-${f.key}">
       <span class="fn">${f.label}</span>
+      <input type="range" min="0" max="5" step="1" value="${weights[f.key]}" oninput="onSlider('${f.key}',+this.value)">
+      <span class="fv" id="fv-${f.key}">${weights[f.key]}</span>
+    </div>`).join('')+
+    `<div class="personal-divider"><div class="personal-lbl">Student Ratings Weight</div></div>`+
+    per.map(f=>`
+    <div class="fr fr-personal${weights[f.key]===0?' off':''}" id="fr-${f.key}">
+      <span class="fn">${f.icon} ${f.label}</span>
       <input type="range" min="0" max="5" step="1" value="${weights[f.key]}" oninput="onSlider('${f.key}',+this.value)">
       <span class="fv" id="fv-${f.key}">${weights[f.key]}</span>
     </div>`).join('');
@@ -472,19 +517,46 @@ function renderRanking(){
   const top=score(sorted[0])||1;
   document.getElementById('ranking').innerHTML=sorted.map((s,i)=>{
     const sc=score(s),pct=Math.round(sc/top*100),isOpen=openSchool===s.name;
-    const facs=FACTORS.filter(f=>weights[f.key]>0);
+    const facs=FACTORS.filter(f=>!f.personal&&weights[f.key]>0);
     const pips=facs.map(f=>{
       const v=s.scores[f.key];
       return `<div class="df"><div class="dflbl">${f.label}</div><div class="pips">${[1,2,3,4,5].map(n=>`<div class="pip" style="${n<=v?'background:'+s.color:''}"></div>`).join('')}</div></div>`;
     }).join('');
-    const detail=isOpen?`<div class="detail-panel">${s.detail?`<p style="font-size:12px;color:var(--t2);margin-bottom:8px">${s.detail}</p>`:''}<div class="dg">${pips}</div></div>`:'';
+
+    // personal rating cards
+    const perFacs=FACTORS.filter(f=>f.personal);
+    const qCards=perFacs.map(f=>{
+      const cur=(personalRatings[s.name]&&personalRatings[s.name][f.key]!=null)?personalRatings[s.name][f.key]:null;
+      const LABELS=['','Strongly no','Probably not','Maybe','Probably yes','Strongly yes'];
+      const sn=s.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const stars=[1,2,3,4,5].map(n=>`<button class="star-btn${cur===n?' active':''}" onclick="event.stopPropagation();setRating('${sn}','${f.key}',${n})">${n}</button>`).join('');
+      const valLabel=cur?`<span class="star-val">${LABELS[cur]}</span>`:`<span class="star-unset">not yet rated</span>`;
+      return `<div class="q-card">
+        <div class="q-title"><span class="q-icon">${f.icon}</span>${f.label}</div>
+        <div class="q-hint">${f.hint}</div>
+        <div class="star-row">${stars}${valLabel}</div>
+      </div>`;
+    }).join('');
+
+    const detail=isOpen?`<div class="detail-panel">
+      ${s.detail?`<p style="font-size:12px;color:var(--t2);margin-bottom:8px">${s.detail}</p>`:''}
+      <div class="dg">${pips}</div>
+      ${perFacs.length?`<div class="q-cards">${qCards}</div>`:''}
+    </div>`:'';
+
     const sn=s.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    // personal score indicator dot
+    const pr=personalRatings[s.name]||{};
+    const hasAny=perFacs.some(f=>pr[f.key]!=null);
+    const allRated=perFacs.every(f=>pr[f.key]!=null);
+    const ratingDot=hasAny?`<span style="width:6px;height:6px;border-radius:50%;background:${allRated?'#f5c842':'#e0d080'};display:inline-block;flex-shrink:0" title="${allRated?'Fully rated':'Partially rated'}"></span>`:'';
+
     return `<div class="school-row${isOpen?' open':''}">
       <div class="si" onclick="toggle('${sn}')">
         <span class="rnum${i<3?' top':''}">${i+1}</span>
         <span class="dot" style="background:${s.color}"></span>
         <div class="sinfo">
-          <div class="sname">${s.short}${s.badge?`<span class="badge">${s.badge}</span>`:''}</div>
+          <div class="sname">${s.short}${s.badge?`<span class="badge">${s.badge}</span>`:''}${ratingDot}</div>
           <div class="snote">${s.note}</div>
         </div>
         <div class="bwrap">
@@ -495,6 +567,14 @@ function renderRanking(){
       </div>${detail}
     </div>`;
   }).join('');
+}
+
+function setRating(name,key,val){
+  if(!personalRatings[name]) personalRatings[name]={};
+  // toggle off if clicking same value
+  if(personalRatings[name][key]===val) personalRatings[name][key]=null;
+  else personalRatings[name][key]=val;
+  renderRanking();
 }
 function toggle(name){openSchool=openSchool===name?null:name;renderRanking();}
 function updateTag(){document.getElementById('pg-tag').textContent=schools.length+' schools';}
