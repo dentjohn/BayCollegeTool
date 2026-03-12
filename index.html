@@ -337,7 +337,7 @@ async function addSchool(){
   document.getElementById('add-err').textContent='';
   showLoadingRow(name);
   try{
-    const res=await fetch('/api/claude',{
+    const res=await fetch('/.netlify/functions/claude-proxy',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name)}]})
