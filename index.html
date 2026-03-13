@@ -197,62 +197,19 @@
   .star-val{font-size:11px;color:var(--t3);margin-left:6px;min-width:50px}
   .star-unset{font-size:10px;color:var(--t3);font-style:italic}
 
-  /* modal */
-  .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
-  .modal-ov.hidden{display:none}
-  .modal{background:var(--bg);border-radius:var(--r);border:0.5px solid var(--bd);box-shadow:0 8px 40px rgba(0,0,0,0.25);padding:1.5rem;max-width:560px;width:100%;max-height:88vh;overflow-y:auto}
-  .mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
-  .mtitle{font-size:16px;font-weight:500}
-  .mclose{font-size:20px;color:var(--t3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;line-height:1}
-  .mclose:hover{background:var(--bg2)}
-  .modal p{font-size:13px;color:var(--t2);margin-bottom:.8rem;line-height:1.6}
-  .modal pre{font-family:'SF Mono','Fira Mono',monospace;font-size:11px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:6px;padding:.75rem;overflow-x:auto;margin-bottom:1rem;color:var(--t1);line-height:1.7;white-space:pre}
-  .ftbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1rem}
-  .ftbl th{text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);padding:0 8px 6px 0;border-bottom:0.5px solid var(--bd)}
-  .ftbl td{padding:5px 8px 5px 0;vertical-align:top;border-bottom:0.5px solid var(--bd);color:var(--t2)}
-  .ftbl td:first-child{font-family:'SF Mono','Fira Mono',monospace;font-size:11px;color:var(--t1);white-space:nowrap}
-  .req{color:#a32d2d;font-size:9px;font-weight:700}
-  .opt{color:var(--t3);font-size:9px}
-
   .footer{margin:1.5rem auto 0;font-size:11px;color:var(--t3);text-align:center}
+
+  /* student info panel */
+  .si-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end}
+  .si-field{display:flex;flex-direction:column;gap:5px}
+  .si-label{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--t3)}
+  .si-input{font-size:13px;padding:7px 10px;border-radius:var(--rs);border:0.5px solid var(--bd2);background:#FFFFFF;color:var(--t1);outline:none;transition:border-color .15s;width:100%;box-sizing:border-box}
+  .si-input:focus{border-color:var(--ac)}
+  .si-input::placeholder{color:var(--t3)}
+  select.si-input{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
 </style>
 </head>
 <body>
-
-<!-- Template modal -->
-<div class="modal-ov hidden" id="modal" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="mhdr">
-      <span class="mtitle">CSV template guide</span>
-      <button class="mclose" onclick="closeModal()">&#215;</button>
-    </div>
-    <p>Download the template, fill in your schools and scores (1–5), and upload the file. Works with Excel, Google Sheets, or any spreadsheet app — export as CSV when done.</p>
-    <table class="ftbl">
-      <tr><th>Column</th><th></th><th>Description</th></tr>
-      <tr><td>name</td><td><span class="req">required</span></td><td>Full school name</td></tr>
-      <tr><td>short</td><td><span class="req">required</span></td><td>Short label shown in the list</td></tr>
-      <tr><td>color</td><td><span class="req">required</span></td><td>Hex color, e.g. "#A51C30"</td></tr>
-      <tr><td>badge</td><td><span class="opt">optional</span></td><td>Green label, e.g. "$20K/yr merit"</td></tr>
-      <tr><td>note</td><td><span class="req">required</span></td><td>One-line subtitle</td></tr>
-      <tr><td>detail</td><td><span class="opt">optional</span></td><td>Longer description shown on click</td></tr>
-      <tr><td>cost</td><td><span class="req">required</span></td><td>1–5 (1=very expensive, 5=very affordable)</td></tr>
-      <tr><td>academics</td><td><span class="req">required</span></td><td>1–5 academic strength</td></tr>
-      <tr><td>classes</td><td><span class="req">required</span></td><td>1–5 small class sizes / faculty access</td></tr>
-      <tr><td>gradRate</td><td><span class="req">required</span></td><td>1–5 four-year graduation rate</td></tr>
-      <tr><td>safety</td><td><span class="req">required</span></td><td>1–5 campus safety</td></tr>
-      <tr><td>housing</td><td><span class="req">required</span></td><td>1–5 housing &amp; dining quality</td></tr>
-      <tr><td>diversity</td><td><span class="req">required</span></td><td>1–5 campus diversity</td></tr>
-      <tr><td>spirit</td><td><span class="req">required</span></td><td>1–5 school spirit / social life</td></tr>
-      <tr><td>weather</td><td><span class="req">required</span></td><td>1–5 climate (1=harsh, 5=ideal)</td></tr>
-      <tr><td>proximity</td><td><span class="req">required</span></td><td>1–5 closeness to home city</td></tr>
-    </table>
-    <pre id="tpl-preview"></pre>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-ac" onclick="downloadTpl()">Download template.csv</button>
-      <button class="btn" onclick="closeModal()">Close</button>
-    </div>
-  </div>
-</div>
 
 <div class="wrap">
   <div class="pg-hdr">
@@ -263,7 +220,135 @@
     <span class="tag" id="pg-tag"></span>
   </div>
 
-  <!-- Add school panel -->
+  <!-- Student Info panel -->
+  <div class="card" style="margin-bottom:1.25rem;background:#EFF6FF;border-color:#BFDBFE;padding:1.75rem 2rem">
+    <div class="panel-top" style="margin-bottom:.9rem">
+      <span class="sec-lbl">Student info</span>
+      <span style="font-size:11px;color:var(--t3)">Optional — helps personalize your comparison</span>
+    </div>
+    <div class="si-panel">
+      <div class="si-field">
+        <label class="si-label">Student name</label>
+        <input class="si-input" type="text" id="si-name" placeholder="e.g. Katie">
+      </div>
+      <div class="si-field">
+        <label class="si-label">Academic focus</label>
+        <select class="si-input" id="si-major" onchange="onMajorChange()">
+          <option value="">— Select a major —</option>
+          <optgroup label="Arts &amp; Humanities">
+            <option>Art &amp; Art History</option>
+            <option>Communications &amp; Media Studies</option>
+            <option>English &amp; Literature</option>
+            <option>Film &amp; Cinema Studies</option>
+            <option>History</option>
+            <option>Linguistics</option>
+            <option>Music</option>
+            <option>Philosophy</option>
+            <option>Theater &amp; Performing Arts</option>
+          </optgroup>
+          <optgroup label="Business &amp; Economics">
+            <option>Accounting</option>
+            <option>Business Administration</option>
+            <option>Economics</option>
+            <option>Entrepreneurship</option>
+            <option>Finance</option>
+            <option>Hospitality &amp; Tourism Management</option>
+            <option>International Business</option>
+            <option>Marketing</option>
+            <option>Supply Chain &amp; Operations</option>
+          </optgroup>
+          <optgroup label="Education">
+            <option>Early Childhood Education</option>
+            <option>Elementary Education</option>
+            <option>Secondary Education</option>
+            <option>Special Education</option>
+          </optgroup>
+          <optgroup label="Engineering &amp; Technology">
+            <option>Aerospace Engineering</option>
+            <option>Biomedical Engineering</option>
+            <option>Chemical Engineering</option>
+            <option>Civil Engineering</option>
+            <option>Computer Engineering</option>
+            <option>Computer Science</option>
+            <option>Data Science</option>
+            <option>Electrical Engineering</option>
+            <option>Environmental Engineering</option>
+            <option>Industrial Engineering</option>
+            <option>Information Technology</option>
+            <option>Mechanical Engineering</option>
+          </optgroup>
+          <optgroup label="Health &amp; Medicine">
+            <option>Athletic Training &amp; Kinesiology</option>
+            <option>Dental Hygiene</option>
+            <option>Exercise Science</option>
+            <option>Health Administration</option>
+            <option>Nursing</option>
+            <option>Nutrition &amp; Dietetics</option>
+            <option>Pharmacy</option>
+            <option>Pre-Dentistry</option>
+            <option>Pre-Medicine</option>
+            <option>Pre-Veterinary</option>
+            <option>Public Health</option>
+          </optgroup>
+          <optgroup label="Law, Politics &amp; Social Science">
+            <option>Criminal Justice</option>
+            <option>International Relations</option>
+            <option>Political Science</option>
+            <option>Pre-Law</option>
+            <option>Psychology</option>
+            <option>Public Policy</option>
+            <option>Social Work</option>
+            <option>Sociology &amp; Anthropology</option>
+          </optgroup>
+          <optgroup label="Natural Sciences">
+            <option>Biochemistry</option>
+            <option>Biology</option>
+            <option>Chemistry</option>
+            <option>Environmental Science</option>
+            <option>Geology &amp; Earth Science</option>
+            <option>Marine Biology</option>
+            <option>Mathematics</option>
+            <option>Neuroscience</option>
+            <option>Physics</option>
+            <option>Statistics</option>
+          </optgroup>
+          <optgroup label="Social Sciences &amp; Interdisciplinary">
+            <option>Cognitive Science</option>
+            <option>Gender &amp; Sexuality Studies</option>
+            <option>Global Studies</option>
+            <option>Human Development</option>
+            <option>Journalism</option>
+            <option>Religious Studies</option>
+            <option>Urban Studies &amp; Planning</option>
+          </optgroup>
+          <optgroup label="Undecided / Other">
+            <option>Undecided / Undeclared</option>
+            <option>Other / Not listed</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="si-field">
+        <label class="si-label">Graduation year</label>
+        <select class="si-input" id="si-year">
+          <option value="">— Select year —</option>
+          <option>2025</option>
+          <option>2026</option>
+          <option>2027</option>
+          <option>2028</option>
+          <option>2029</option>
+          <option>2030</option>
+          <option>2031</option>
+          <option>2032</option>
+          <option>2033</option>
+          <option>2034</option>
+        </select>
+      </div>
+    </div>
+    <div id="major-rescore-banner" style="display:none;margin-top:1rem;padding:10px 14px;background:#FEF9C3;border:0.5px solid #FDE047;border-radius:var(--rs);font-size:12px;color:#854D0E;align-items:center;gap:10px;flex-wrap:wrap">
+      <span>⚠ Academic focus changed — existing school scores reflect a different major.</span>
+      <button class="btn btn-sm" onclick="rescoreAllSchools()" style="background:#854D0E;color:#fff;border-color:#854D0E;white-space:nowrap">Re-score all schools for new major</button>
+    </div>
+  </div>
   <div class="card add-panel" style="margin-bottom:1.25rem">
     <div class="panel-top">
       <span class="sec-lbl">Add a school</span>
@@ -279,19 +364,19 @@
     <div class="add-err" id="add-err" style="margin-top:5px"></div>
     <div class="add-hint">
       Claude scores each school on all 10 factors using US News, NCES, and Common Data Set data. Scores are relative 1–5 ratings for comparison.
+      You can also upload a CSV with just a column of school names — Claude will look them all up automatically.
     </div>
 
     <div class="up-strip">
-      <span class="sec-lbl">Or upload CSV</span>
+      <span class="sec-lbl">Or upload a list of school names</span>
       <span class="up-st s-def" id="up-status">No file loaded</span>
-      <button class="btn btn-sm" onclick="openModal()">View template</button>
       <div class="drop-zone" id="drop-zone"
         onclick="document.getElementById('file-input').click()"
         ondragover="event.preventDefault();this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="handleDrop(event)">Upload CSV</div>
       <input type="file" id="file-input" accept=".csv,text/csv" onchange="handleFile(this.files[0])">
-      <button class="btn btn-sm btn-muted" id="reset-btn" style="display:none" onclick="resetData()">Reset to defaults</button>
+      <button class="btn btn-sm btn-muted" id="reset-btn" style="display:none" onclick="resetData()">Reset</button>
     </div>
   </div>
 
@@ -332,6 +417,7 @@
 const FACTORS=[
   {key:'cost',label:'Affordable cost'},
   {key:'academics',label:'Academic strength'},
+  {key:'academicFocus',label:'Academic focus match'},
   {key:'classes',label:'Small classes'},
   {key:'gradRate',label:'4-yr grad rate'},
   {key:'safety',label:'Campus safety'},
@@ -350,31 +436,27 @@ const PERSONAL_FACTORS=[
 ];
 
 const PRESETS=[
-  {label:'Balanced',   w:{cost:4,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2}},
-  {label:'Value',      w:{cost:5,academics:3,classes:3,gradRate:4,safety:2,housing:2,diversity:2,spirit:2,weather:1,proximity:1}},
-  {label:'Academic',   w:{cost:2,academics:5,classes:5,gradRate:5,safety:3,housing:2,diversity:3,spirit:1,weather:1,proximity:1}},
-  {label:'Social',     w:{cost:2,academics:3,classes:2,gradRate:2,safety:4,housing:5,diversity:4,spirit:5,weather:4,proximity:3}},
-  {label:'Close home', w:{cost:3,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:4,spirit:3,weather:4,proximity:5}},
+  {label:'Balanced',   w:{cost:4,academics:4,academicFocus:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2}},
+  {label:'Value',      w:{cost:5,academics:3,academicFocus:3,classes:3,gradRate:4,safety:2,housing:2,diversity:2,spirit:2,weather:1,proximity:1}},
+  {label:'Academic',   w:{cost:2,academics:5,academicFocus:5,classes:5,gradRate:5,safety:3,housing:2,diversity:3,spirit:1,weather:1,proximity:1}},
+  {label:'Social',     w:{cost:2,academics:3,academicFocus:2,classes:2,gradRate:2,safety:4,housing:5,diversity:4,spirit:5,weather:4,proximity:3}},
+  {label:'Close home', w:{cost:3,academics:4,academicFocus:3,classes:3,gradRate:3,safety:3,housing:3,diversity:4,spirit:3,weather:4,proximity:5}},
 ];
 
 const DEFAULT_SCHOOLS=[];
 
-const TPL_HDR='name,short,color,badge,note,detail,cost,academics,classes,gradRate,safety,housing,diversity,spirit,weather,proximity';
-const TPL_ROWS=[
-  'Harvard University,Harvard,#A51C30,Full scholarship,Cambridge MA · Ivy League · Top research,"World-class faculty. 4% acceptance rate. Strong in every field. Boston location excellent for internships.",1,5,4,5,4,4,4,3,2,2',
-  'State University,State U,#1a6fb5,,Great value · 18K students · D-I sports,"Flagship public university. Strong engineering and business. Active Greek life and athletics.",5,3,2,3,4,4,3,5,3,4',
-];
-const TEMPLATE_CSV=[TPL_HDR,...TPL_ROWS].join('\n');
-
 let schools=DEFAULT_SCHOOLS.map(s=>({...s}));
-const weights={cost:4,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2};
+const weights={cost:4,academics:4,academicFocus:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2};
+let lastScoredMajor=''; // track what major schools were scored with
 let personalRatings={};  // { schoolName: { growth: null|1-5, comfort: null|1-5 } }
 let customScores={};     // { schoolName: { cfId: 1-5 } }
 let activePreset=0;
 let openSchool=null;
 
 /* ── Claude lookup via Netlify proxy ── */
-const SCHOOL_PROMPT=name=>`You are a college data expert. Research "${name}" and return ONLY valid JSON (no markdown, no preamble) in exactly this structure:
+function getMajor(){ return document.getElementById('si-major')?.value||''; }
+
+const SCHOOL_PROMPT=(name,major)=>`You are a college data expert. Research "${name}" and return ONLY valid JSON (no markdown, no preamble) in exactly this structure:
 {
   "name": "Full official name",
   "short": "1-2 word label",
@@ -385,6 +467,7 @@ const SCHOOL_PROMPT=name=>`You are a college data expert. Research "${name}" and
   "scores": {
     "cost": <1-5>,
     "academics": <1-5>,
+    "academicFocus": <1-5>,
     "classes": <1-5>,
     "gradRate": <1-5>,
     "safety": <1-5>,
@@ -399,6 +482,7 @@ const SCHOOL_PROMPT=name=>`You are a college data expert. Research "${name}" and
 Scoring (integers 1–5):
 - cost: 1=very expensive >$80K/yr sticker, 2=$65-80K, 3=$45-65K, 4=$30-45K net, 5=very affordable <$30K net
 - academics: US News rank + research quality (1=low, 5=top 25 national)
+- academicFocus: ${major ? `How strong is this school specifically for a student interested in "${major}"? Consider ranked programs, faculty, research, internship pipelines, and alumni outcomes in that field. (1=weak/no notable program, 3=solid program, 5=nationally recognized/top program for this major)` : `Leave as 3 (no major selected).`}
 - classes: student-faculty ratio + % classes under 20 (1=huge lectures, 5=very small)
 - gradRate: 4-year rate (1=<50%, 2=50-65%, 3=65-75%, 4=75-85%, 5=85%+)
 - safety: campus crime rates + location (1=high crime, 5=very safe)
@@ -421,11 +505,12 @@ async function addSchool(){
   setAdding(true);
   document.getElementById('add-err').textContent='';
   showLoadingRow(name);
+  const major=getMajor();
   try{
     const res=await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name)}]})
+      body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name,major)}]})
     });
     if(!res.ok){
       const e=await res.json().catch(()=>({}));
@@ -435,14 +520,17 @@ async function addSchool(){
     const text=data.content?.find(b=>b.type==='text')?.text||'';
     const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
     if(parsed.error) throw new Error(parsed.error);
-    const sfs=['cost','academics','classes','gradRate','safety','housing','diversity','spirit','weather','proximity'];
+    const sfs=['cost','academics','academicFocus','classes','gradRate','safety','housing','diversity','spirit','weather','proximity'];
     for(const f of sfs){
       const v=parseInt(parsed.scores?.[f]);
       if(isNaN(v)||v<1||v>5) throw new Error(`Invalid score for "${f}"`);
       parsed.scores[f]=v;
     }
+    parsed._scoredMajor=major;
     removeLoadingRow();
     schools.push(parsed);
+    if(major) lastScoredMajor=major;
+    hideMajorBanner();
     inp.value='';
     renderRanking(); updateTag();
   }catch(err){
@@ -471,59 +559,111 @@ function removeSchool(name){
   renderRanking(); updateTag();
 }
 
-/* ── CSV ── */
+/* ── Major change handling ── */
+function onMajorChange(){
+  const major=getMajor();
+  const banner=document.getElementById('major-rescore-banner');
+  if(!banner) return;
+  // Show banner if schools exist and major differs from what they were scored with
+  const hasSchools=schools.length>0;
+  const majorChanged=hasSchools && major !== lastScoredMajor;
+  banner.style.display=majorChanged?'flex':'none';
+}
+function hideMajorBanner(){
+  const banner=document.getElementById('major-rescore-banner');
+  if(banner) banner.style.display='none';
+}
+async function rescoreAllSchools(){
+  if(!schools.length) return;
+  const major=getMajor();
+  const names=schools.map(s=>s.name);
+  // Remember personal ratings and custom scores
+  const savedPersonal={...personalRatings};
+  const savedCustom={...customScores};
+  const savedOpen=openSchool;
+  await batchLookup(names);
+  // Restore personal/custom ratings after rescore
+  personalRatings=savedPersonal;
+  customScores=savedCustom;
+  openSchool=savedOpen;
+  lastScoredMajor=major;
+  hideMajorBanner();
+  renderRanking();
+}
+
+
 function handleDrop(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);}
 function handleFile(file){
   if(!file)return;
   const r=new FileReader();
   r.onload=e=>{
-    try{
-      const p=parseCSV(e.target.result);
-      schools=p;openSchool=null;
-      setUpSt('s-ok',p.length+' schools loaded from CSV');
-      document.getElementById('reset-btn').style.display='';
-      renderRanking();updateTag();
-    }catch(err){setUpSt('s-err','Error: '+err.message);}
+    const lines=e.target.result.trim().split(/\r?\n/).filter(l=>l.trim());
+    if(lines.length<2){ setUpSt('s-err','Error: Need a header row + at least one school name.'); return; }
+    const names=lines.slice(1).map(l=>l.split(',')[0].replace(/"/g,'').trim()).filter(Boolean);
+    if(!names.length){ setUpSt('s-err','Error: No school names found.'); return; }
+    batchLookup(names);
   };
   r.readAsText(file);
   document.getElementById('file-input').value='';
 }
-function parseCSV(txt){
-  const lines=txt.trim().split(/\r?\n/).filter(l=>l.trim());
-  if(lines.length<2)throw new Error('Need header + at least one row.');
-  const hdr=sl(lines[0]);
-  const req=['name','short','color','note','cost','academics','classes','gradRate','safety','housing','diversity','spirit','weather','proximity'];
-  const miss=req.filter(k=>!hdr.includes(k));
-  if(miss.length)throw new Error('Missing columns: '+miss.join(', '));
-  const out=[];
-  for(let i=1;i<lines.length;i++){
-    const vals=sl(lines[i]);const row={};
-    hdr.forEach((h,idx)=>row[h]=(vals[idx]||'').trim());
-    if(!row.name)continue;
-    const s={name:row.name,short:row.short||row.name,color:row.color||'#888',badge:row.badge||null,note:row.note||'',detail:row.detail||'',scores:{}};
-    for(const f of ['cost','academics','classes','gradRate','safety','housing','diversity','spirit','weather','proximity']){
-      const v=parseInt(row[f],10);
-      if(isNaN(v)||v<1||v>5)throw new Error(`Row ${i+1} "${s.name}": "${f}" must be 1–5.`);
-      s.scores[f]=v;
+
+async function batchLookup(names){
+  schools=[]; openSchool=null; personalRatings={}; customScores={};
+  renderRanking(); updateTag();
+  document.getElementById('reset-btn').style.display='';
+  setUpSt('s-def', `Looking up ${names.length} school${names.length>1?'s':''}…`);
+  const major=getMajor();
+  if(major) lastScoredMajor=major;
+
+  let loaded=0, failed=[];
+
+  for(const name of names){
+    if(schools.find(s=>s.name.toLowerCase()===name.toLowerCase())){ loaded++; continue; }
+    setUpSt('s-def', `Looking up ${name}… (${loaded+1} of ${names.length})`);
+    const loadId='batch-loading-'+Date.now();
+    const el=document.createElement('div');
+    el.className='loading-row'; el.id=loadId;
+    el.innerHTML=`<span class="spin"></span> Looking up ${name}…`;
+    document.getElementById('ranking').appendChild(el);
+    try{
+      const res=await fetch('/api/claude',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name,major)}]})
+      });
+      if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`Server error ${res.status}`); }
+      const data=await res.json();
+      const text=data.content?.find(b=>b.type==='text')?.text||'';
+      const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
+      if(parsed.error) throw new Error(parsed.error);
+      const sfs=['cost','academics','academicFocus','classes','gradRate','safety','housing','diversity','spirit','weather','proximity'];
+      for(const f of sfs){
+        const v=parseInt(parsed.scores?.[f]);
+        if(isNaN(v)||v<1||v>5) throw new Error(`Invalid score for "${f}"`);
+        parsed.scores[f]=v;
+      }
+      parsed._scoredMajor=major;
+      document.getElementById(loadId)?.remove();
+      schools.push(parsed);
+      loaded++;
+    } catch(err){
+      document.getElementById(loadId)?.remove();
+      failed.push(name);
     }
-    out.push(s);
+    renderRanking(); updateTag();
   }
-  if(!out.length)throw new Error('No valid rows.');
-  return out;
-}
-function sl(line){
-  const r=[];let cur='',inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
-    else if(c===','&&!inQ){r.push(cur);cur='';}
-    else cur+=c;
+
+  hideMajorBanner();
+  if(failed.length){
+    setUpSt('s-err', `${loaded} loaded · Could not find: ${failed.join(', ')}`);
+  } else {
+    setUpSt('s-ok', `${loaded} school${loaded>1?'s':''} loaded from CSV`);
   }
-  r.push(cur);return r;
 }
 function setUpSt(cls,msg){const el=document.getElementById('up-status');el.className='up-st '+cls;el.textContent=msg;}
 function resetData(){
-  schools=DEFAULT_SCHOOLS.map(s=>({...s}));openSchool=null;personalRatings={};customScores={};customFactors=[];cfNextId=1;
+  schools=DEFAULT_SCHOOLS.map(s=>({...s}));openSchool=null;personalRatings={};customScores={};customFactors=[];cfNextId=1;lastScoredMajor='';
+  hideMajorBanner();
   setUpSt('s-def','No file loaded');
   document.getElementById('reset-btn').style.display='none';
   renderCustomFactors();renderRanking();updateTag();
@@ -713,13 +853,6 @@ function toggle(name){openSchool=openSchool===name?null:name;renderRanking();}
 function updateTag(){document.getElementById('pg-tag').textContent=schools.length+' schools';}
 
 updateTag();renderPresets();renderSliders();renderCustomFactors();renderRanking();
-function openModal(){document.getElementById('tpl-preview').textContent=TEMPLATE_CSV;document.getElementById('modal').classList.remove('hidden');}
-function closeModal(){document.getElementById('modal').classList.add('hidden');}
-function downloadTpl(){
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(TEMPLATE_CSV);
-  a.download='college-decision-template.csv';a.click();
-}
 
 /* ── Download CSV ── */
 function esc(v){ const s=String(v==null?'':v); return (s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s; }
