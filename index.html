@@ -221,9 +221,55 @@
   .si-input:focus{border-color:var(--ac)}
   .si-input::placeholder{color:var(--t3)}
   select.si-input{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+  /* ── Guided tour ── */
+  .tour-overlay{position:fixed;inset:0;z-index:1000;pointer-events:none}
+  .tour-overlay.active{pointer-events:all}
+  .tour-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0);transition:background .35s;z-index:1001}
+  .tour-overlay.active .tour-backdrop{background:rgba(0,0,0,0.55)}
+  .tour-spotlight{position:fixed;z-index:1002;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,0);transition:all .38s cubic-bezier(.4,0,.2,1),box-shadow .35s;pointer-events:none}
+  .tour-overlay.active .tour-spotlight{box-shadow:0 0 0 9999px rgba(0,0,0,0.55),0 0 0 3px var(--ac),0 0 24px rgba(99,102,241,0.5)}
+  .tour-card{position:fixed;z-index:1003;background:var(--bg);border:0.5px solid var(--bd);border-radius:12px;box-shadow:0 12px 48px rgba(0,0,0,0.28);width:320px;padding:20px;transition:all .32s cubic-bezier(.4,0,.2,1);opacity:0;transform:translateY(8px)}
+  .tour-overlay.active .tour-card{opacity:1;transform:translateY(0)}
+  .tour-step-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ac);margin-bottom:8px}
+  .tour-dots{display:flex;gap:4px;margin-left:auto}
+  .tour-dot{width:6px;height:6px;border-radius:50%;background:var(--bd2);transition:background .2s}
+  .tour-dot.active{background:var(--ac)}
+  .tour-title{font-size:15px;font-weight:600;color:var(--t1);margin-bottom:6px;line-height:1.3}
+  .tour-body{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:16px}
+  .tour-footer{display:flex;align-items:center;gap:8px}
+  .tour-btn{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+  .tour-btn-skip{background:none;color:var(--t3);padding:7px 8px;margin-right:auto}
+  .tour-btn-skip:hover{color:var(--t2)}
+  .tour-btn-back{background:var(--bg2);color:var(--t2);border:0.5px solid var(--bd2)}
+  .tour-btn-back:hover{background:var(--bg3)}
+  .tour-btn-next{background:var(--ac);color:#fff}
+  .tour-btn-next:hover{opacity:.9}
+  .tour-icon{font-size:22px;margin-bottom:6px}
+  .tour-trigger{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--ac);cursor:pointer;background:none;border:0.5px solid var(--ac);border-radius:20px;padding:4px 11px;transition:all .15s;white-space:nowrap}
+  .tour-trigger:hover{background:var(--ac);color:#fff}
 </style>
 </head>
 <body>
+
+<!-- Tour overlay -->
+<div class="tour-overlay" id="tour-overlay">
+  <div class="tour-backdrop" onclick="tourSkip()"></div>
+  <div class="tour-spotlight" id="tour-spotlight"></div>
+  <div class="tour-card" id="tour-card">
+    <div style="display:flex;align-items:flex-start;margin-bottom:4px">
+      <div class="tour-step-badge" id="tour-badge">Step 1 of 9</div>
+      <div class="tour-dots" id="tour-dots"></div>
+    </div>
+    <div class="tour-icon" id="tour-icon"></div>
+    <div class="tour-title" id="tour-title"></div>
+    <div class="tour-body" id="tour-body"></div>
+    <div class="tour-footer">
+      <button class="tour-btn tour-btn-skip" onclick="tourSkip()">Skip tour</button>
+      <button class="tour-btn tour-btn-back" id="tour-back" onclick="tourBack()">Back</button>
+      <button class="tour-btn tour-btn-next" id="tour-next" onclick="tourNext()">Next →</button>
+    </div>
+  </div>
+</div>
 
 <div class="wrap">
   <div class="pg-hdr">
@@ -231,11 +277,14 @@
       <div class="pg-title">Bay College Decision Tool</div>
       <div class="pg-sub">Add schools using the lookup below, then adjust the factor weights to rank them in real time.</div>
     </div>
-    <span class="tag" id="pg-tag"></span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="tour-trigger" onclick="tourStart()">▶ How it works</button>
+      <span class="tag" id="pg-tag"></span>
+    </div>
   </div>
 
   <!-- Student Info panel -->
-  <div class="card" style="margin-bottom:1.25rem;background:#EFF6FF;border-color:#BFDBFE;padding:1.75rem 2rem">
+  <div class="card" id="tour-student" style="margin-bottom:1.25rem;background:#EFF6FF;border-color:#BFDBFE;padding:1.75rem 2rem">
     <div class="panel-top" style="margin-bottom:.9rem">
       <span class="sec-lbl">Student info</span>
       <span style="font-size:11px;color:var(--t3)">Optional — helps personalize your comparison</span>
@@ -245,8 +294,7 @@
         <label class="si-label">Student name</label>
         <input class="si-input" type="text" id="si-name" placeholder="e.g. Katie">
       </div>
-      <div class="si-field">
-        <label class="si-label">Academic focus</label>
+      <div class="si-field" id="tour-major">
         <select class="si-input" id="si-major" onchange="onMajorChange()">
           <option value="">— Select a major —</option>
           <optgroup label="Arts &amp; Humanities">
@@ -363,7 +411,7 @@
       <button class="btn btn-sm" onclick="rescoreAllSchools()" style="background:#854D0E;color:#fff;border-color:#854D0E;white-space:nowrap">Re-score all schools for new major</button>
     </div>
   </div>
-  <div class="card add-panel" style="margin-bottom:1.25rem">
+  <div class="card add-panel" id="tour-addschool" style="margin-bottom:1.25rem">
     <div class="panel-top">
       <span class="sec-lbl">Add a school</span>
       <span style="font-size:11px;color:var(--t3)">Claude researches scores &amp; details automatically</span>
@@ -381,8 +429,7 @@
       You can also upload a CSV with just a column of school names — Claude will look them all up automatically.
     </div>
 
-    <div class="up-strip">
-      <span class="sec-lbl">Or upload a list of school names</span>
+    <div class="up-strip" id="tour-upload">
       <span class="up-st s-def" id="up-status">No file loaded</span>
       <div class="drop-zone" id="drop-zone"
         onclick="document.getElementById('file-input').click()"
@@ -396,12 +443,12 @@
 
   <!-- Main tool -->
   <div class="main">
-    <div class="card lp">
+    <div class="card lp" id="tour-weights">
       <div class="sec-lbl" style="margin-bottom:.75rem">Presets</div>
       <div class="preset-row" id="presets"></div>
-      <div class="sec-lbl" style="margin-bottom:.75rem">Factor weights &nbsp;(0=ignore · 5=critical)</div>
+      <div class="sec-lbl" id="tour-sliders" style="margin-bottom:.75rem">Factor weights &nbsp;(0=ignore · 5=critical)</div>
       <div id="sliders"></div>
-      <div class="cf-divider">
+      <div class="cf-divider" id="tour-custom">
         <div class="cf-header">
           <span class="sec-lbl" style="margin:0;color:#b07a00">Custom factors</span>
           <button class="cf-add-btn" id="cf-add-btn" onclick="addCustomFactor()">+ Add factor</button>
@@ -411,7 +458,7 @@
         </div>
       </div>
     </div>
-    <div class="card rp">
+    <div class="card rp" id="tour-ranking">
       <div class="rk-hdr">
         <div class="sec-lbl" style="margin:0">Ranking</div>
         <div style="font-size:11px;color:var(--t3)">Rate each school · Hover to remove</div>
@@ -423,7 +470,7 @@
   <div class="footer" id="footer">
     Default data: US News 2026 · NCES 2024–25 · Common Data Sets. AI-generated scores are approximate and for comparison only.
     <br><br>
-    <button class="btn btn-ac" onclick="downloadCSV()" style="margin:0 auto;font-size:15px;padding:10px 22px;font-weight:700">⬇ Download results as CSV</button>
+    <button class="btn btn-ac" id="tour-download" onclick="downloadCSV()" style="margin:0 auto;font-size:15px;padding:10px 22px;font-weight:700">⬇ Download results as CSV</button>
   </div>
 </div>
 
@@ -534,13 +581,26 @@ const SCHOOL_PROMPT=(name,major)=>`You are a college data expert. Research "${na
     "spirit": <1-5>,
     "weather": <1-5>,
     "proximity": <1-5>
+  },
+  "explanations": {
+    "cost": "1 sentence explaining the cost score with specific figures",
+    "academics": "1 sentence explaining the academics score",
+    "academicFocus": "1 sentence explaining the academic focus score for the given major",
+    "classes": "1 sentence with specific student-faculty ratio and class size data",
+    "gradRate": "1 sentence with specific 4-year graduation rate",
+    "safety": "1 sentence explaining the safety score",
+    "housing": "1 sentence explaining housing and dining quality",
+    "diversity": "1 sentence with specific diversity data",
+    "spirit": "1 sentence explaining school spirit and social life",
+    "weather": "1 sentence describing the climate",
+    "proximity": "1 sentence with approximate distance from San Francisco"
   }
 }
 
 Scoring (integers 1–5):
 - cost: 1=very expensive >$80K/yr sticker, 2=$65-80K, 3=$45-65K, 4=$30-45K net, 5=very affordable <$30K net
 - academics: US News rank + research quality (1=low, 5=top 25 national)
-- academicFocus: ${major ? `How strong is this school specifically for a student interested in "${major}"? Consider ranked programs, faculty, research, internship pipelines, and alumni outcomes in that field. (1=weak/no notable program, 3=solid program, 5=nationally recognized/top program for this major)` : `Leave as 3 (no major selected).`}
+- academicFocus: ${major ? `How strong is this school specifically for a student interested in "${major}"? Consider ranked programs, faculty, research, internship pipelines, and alumni outcomes in that field. (1=weak/no notable program, 3=solid program, 5=nationally recognized/top program for this major)` : `Leave as 3 (no major selected). Explanation: "No major selected — defaulted to neutral score."`}
 - classes: student-faculty ratio + % classes under 20 (1=huge lectures, 5=very small)
 - gradRate: 4-year rate (1=<50%, 2=50-65%, 3=65-75%, 4=75-85%, 5=85%+)
 - safety: campus crime rates + location (1=high crime, 5=very safe)
@@ -584,6 +644,7 @@ async function addSchool(){
       if(isNaN(v)||v<1||v>5) throw new Error(`Invalid score for "${f}"`);
       parsed.scores[f]=v;
     }
+    parsed.explanations = parsed.explanations || {};
     parsed._scoredMajor=major;
     removeLoadingRow();
     schools.push(parsed);
@@ -700,6 +761,7 @@ async function batchLookup(names){
         if(isNaN(v)||v<1||v>5) throw new Error(`Invalid score for "${f}"`);
         parsed.scores[f]=v;
       }
+      parsed.explanations = parsed.explanations || {};
       parsed._scoredMajor=major;
       document.getElementById(loadId)?.remove();
       schools.push(parsed);
@@ -921,6 +983,198 @@ function updateTag(){document.getElementById('pg-tag').textContent=schools.lengt
 
 updateTag();renderPresets();renderSliders();renderCustomFactors();renderRanking();
 
+/* ══════════════════════════════════════════
+   GUIDED TOUR
+══════════════════════════════════════════ */
+const TOUR_STEPS = [
+  {
+    target: null,
+    icon: '🎓',
+    title: 'Welcome to the Bay College Decision Tool',
+    body: 'This quick tour walks you through everything you need to compare colleges side-by-side and find your best fit. Takes about 2 minutes. Let\'s go!',
+    pos: 'center'
+  },
+  {
+    target: 'tour-student',
+    icon: '👤',
+    title: 'Step 1 — Enter Your Student Info',
+    body: 'Start here. Enter the student\'s name, expected graduation year, and most importantly, their <strong>Academic Focus</strong>. This major selection directly affects how schools are scored for program strength.',
+    pos: 'below'
+  },
+  {
+    target: 'tour-major',
+    icon: '🎯',
+    title: 'Academic Focus Changes Everything',
+    body: 'Choosing a major here tells Claude to score each school on how strong its program is specifically for that field — faculty depth, rankings, internships, and alumni outcomes. If you change it later, you\'ll be prompted to re-score all schools.',
+    pos: 'below'
+  },
+  {
+    target: 'tour-addschool',
+    icon: '🔍',
+    title: 'Step 2 — Add Schools',
+    body: 'Type any college name and click <strong>Look up school</strong>. Claude researches and scores it automatically across all 11 factors in about 10–15 seconds. Add as many schools as you like.',
+    pos: 'below'
+  },
+  {
+    target: 'tour-upload',
+    icon: '📂',
+    title: 'Or Upload a List',
+    body: 'Have a list already? Upload a CSV with a single column of school names — one per row with a header. Claude will look up and score all of them sequentially, showing progress as it goes.',
+    pos: 'above'
+  },
+  {
+    target: 'tour-weights',
+    icon: '⚖️',
+    title: 'Step 3 — Adjust Factor Weights',
+    body: 'Use the sliders to set how much each factor matters to you — 0 means ignore it completely, 5 means it\'s critical. Use the <strong>Presets</strong> at the top for quick starting points like Academic, Value, or Social.',
+    pos: 'right'
+  },
+  {
+    target: 'tour-custom',
+    icon: '✦',
+    title: 'Add Your Own Factors',
+    body: 'Have a factor that matters to your family that isn\'t in the list? Click <strong>+ Add factor</strong>, name it, and set a weight. You can add up to 3 custom factors and rate each school on them.',
+    pos: 'right'
+  },
+  {
+    target: 'tour-ranking',
+    icon: '🏆',
+    title: 'Step 4 — Review the Rankings',
+    body: 'Schools are ranked in real time based on all factor weights. Click any school row to expand its full details and program description. Use the <strong>personal rating buttons</strong> below each school to add your gut-feel scores — they feed into the total.',
+    pos: 'left'
+  },
+  {
+    target: 'tour-download',
+    icon: '⬇️',
+    title: 'Step 5 — Download Your Results',
+    body: 'When you\'re done, download a complete CSV snapshot of your comparison — all schools, scores, weights, personal ratings, and custom factors included. Great for sharing with family or advisors.',
+    pos: 'above',
+    isLast: true
+  }
+];
+
+let tourStep = 0;
+let tourActive = false;
+
+function tourStart() {
+  tourStep = 0;
+  tourActive = true;
+  document.getElementById('tour-overlay').classList.add('active');
+  tourRender();
+}
+
+function tourNext() {
+  if (tourStep >= TOUR_STEPS.length - 1) { tourSkip(); return; }
+  tourStep++;
+  tourRender();
+}
+
+function tourBack() {
+  if (tourStep <= 0) return;
+  tourStep--;
+  tourRender();
+}
+
+function tourSkip() {
+  tourActive = false;
+  document.getElementById('tour-overlay').classList.remove('active');
+  const spotlight = document.getElementById('tour-spotlight');
+  spotlight.style.width = '0';
+  spotlight.style.height = '0';
+}
+
+function tourRender() {
+  const step = TOUR_STEPS[tourStep];
+  const total = TOUR_STEPS.length;
+
+  // Badge
+  document.getElementById('tour-badge').textContent = `Step ${tourStep + 1} of ${total}`;
+
+  // Dots
+  document.getElementById('tour-dots').innerHTML = TOUR_STEPS.map((_, i) =>
+    `<div class="tour-dot${i === tourStep ? ' active' : ''}"></div>`
+  ).join('');
+
+  // Content
+  document.getElementById('tour-icon').textContent = step.icon;
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-body').innerHTML = step.body;
+
+  // Buttons
+  document.getElementById('tour-back').style.display = tourStep === 0 ? 'none' : '';
+  const nextBtn = document.getElementById('tour-next');
+  nextBtn.textContent = step.isLast ? '🎉 Done!' : 'Next →';
+
+  // Spotlight + card position
+  if (!step.target) {
+    // Center card, no spotlight
+    const spotlight = document.getElementById('tour-spotlight');
+    spotlight.style.width = '0px';
+    spotlight.style.height = '0px';
+    positionCard(null, 'center');
+  } else {
+    const el = document.getElementById(step.target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setTimeout(() => {
+        const rect = el.getBoundingClientRect();
+        const pad = 8;
+        const spotlight = document.getElementById('tour-spotlight');
+        spotlight.style.left = (rect.left - pad) + 'px';
+        spotlight.style.top = (rect.top - pad) + 'px';
+        spotlight.style.width = (rect.width + pad * 2) + 'px';
+        spotlight.style.height = (rect.height + pad * 2) + 'px';
+        positionCard(rect, step.pos);
+      }, 120);
+    }
+  }
+}
+
+function positionCard(rect, pos) {
+  const card = document.getElementById('tour-card');
+  const cw = 320, pad = 16;
+  const vw = window.innerWidth, vh = window.innerHeight;
+
+  if (pos === 'center' || !rect) {
+    card.style.left = ((vw - cw) / 2) + 'px';
+    card.style.top = ((vh - 300) / 2) + 'px';
+    return;
+  }
+
+  let left, top;
+
+  if (pos === 'below') {
+    left = Math.min(rect.left, vw - cw - pad);
+    top = rect.bottom + 16;
+    if (top + 260 > vh) top = rect.top - 260 - 16;
+  } else if (pos === 'above') {
+    left = Math.min(rect.left, vw - cw - pad);
+    top = rect.top - 260 - 16;
+    if (top < pad) top = rect.bottom + 16;
+  } else if (pos === 'right') {
+    left = rect.right + 16;
+    top = rect.top;
+    if (left + cw > vw - pad) left = rect.left - cw - 16;
+  } else if (pos === 'left') {
+    left = rect.left - cw - 16;
+    top = rect.top;
+    if (left < pad) left = rect.right + 16;
+  }
+
+  // Clamp
+  left = Math.max(pad, Math.min(left, vw - cw - pad));
+  top = Math.max(pad, Math.min(top, vh - 280));
+
+  card.style.left = left + 'px';
+  card.style.top = top + 'px';
+}
+
+// Reposition on scroll/resize
+window.addEventListener('resize', () => { if (tourActive) tourRender(); });
+window.addEventListener('scroll', () => { if (tourActive) tourRender(); }, { passive: true });
+
+
+
 /* ── Download CSV ── */
 function esc(v){ const s=String(v==null?'':v); return (s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s; }
 
@@ -930,8 +1184,8 @@ function downloadCSV(){
   const sorted=[...schools].sort((a,b)=>score(b)-score(a));
   const LABELS=['','Strongly no','Probably not','Maybe','Probably yes','Strongly yes'];
 
-  // ── Build header
-  const stdHeaders  = FACTORS.map(f=>f.label);
+  // ── Build header: each factor gets Score + Explanation column pair
+  const stdHeaders  = FACTORS.flatMap(f=>[f.label+' (Score)', f.label+' (Explanation)']);
   const perHeaders  = PERSONAL_FACTORS.map(f=>f.label);
   const cfHeaders   = customFactors.filter(cf=>cf.label.trim()).map(cf=>cf.label.trim());
   const header = [
@@ -942,8 +1196,8 @@ function downloadCSV(){
     'Total Score','Detail'
   ];
 
-  // ── Weight row
-  const stdWeights  = FACTORS.map(f=>weights[f.key]);
+  // ── Weight row: weight under the Score column, blank under Explanation
+  const stdWeights  = FACTORS.flatMap(f=>[`weight: ${weights[f.key]}`, '']);
   const perWeights  = PERSONAL_FACTORS.map(f=>f.weight);
   const cfWeights   = customFactors.filter(cf=>cf.label.trim()).map(cf=>cf.weight);
   const weightRow = [
@@ -958,7 +1212,11 @@ function downloadCSV(){
   const dataRows = sorted.map((s,i)=>{
     const pr = personalRatings[s.name]||{};
     const cs = customScores[s.name]||{};
-    const stdScores = FACTORS.map(f=>s.scores[f.key]||'');
+    const expl = s.explanations||{};
+    const stdScores = FACTORS.flatMap(f=>[
+      s.scores[f.key]||'',
+      expl[f.key]||''
+    ]);
     const perScores = PERSONAL_FACTORS.map(f=>{
       const v=pr[f.key]; return v!=null?`${v} – ${LABELS[v]}`:'';
     });
