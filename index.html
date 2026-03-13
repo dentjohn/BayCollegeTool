@@ -139,6 +139,29 @@
     .rs-val.rated{color:#e9b84a}
   }
 
+  /* custom factors */
+  .cf-divider{margin:1rem 0 .75rem;padding-top:.75rem;border-top:0.5px solid var(--bd)}
+  .cf-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+  .cf-rows{display:flex;flex-direction:column;gap:6px}
+  .cf-row{display:flex;align-items:center;gap:5px}
+  .cf-name-inp{flex:1;font-size:11px;padding:4px 7px;border-radius:var(--rs);border:0.5px solid var(--bd2);background:var(--bg2);color:var(--t1);outline:none;min-width:0;transition:border-color .15s}
+  .cf-name-inp:focus{border-color:var(--ac)}
+  .cf-name-inp::placeholder{color:var(--t3)}
+  .cf-slider{width:52px;flex-shrink:0;-webkit-appearance:none;appearance:none;height:3px;background:var(--bg3);border-radius:2px;outline:none;cursor:pointer}
+  .cf-slider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#7a5500;cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px #7a5500}
+  .cf-slider::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#7a5500;cursor:pointer;border:2px solid var(--bg)}
+  @media(prefers-color-scheme:dark){
+    .cf-slider::-webkit-slider-thumb{background:#d4a030;box-shadow:0 0 0 1px #d4a030}
+    .cf-slider::-moz-range-thumb{background:#d4a030}
+  }
+  .cf-val{font-size:11px;font-weight:600;color:#7a5500;width:12px;text-align:right;flex-shrink:0}
+  @media(prefers-color-scheme:dark){.cf-val{color:#d4a030}}
+  .cf-rm{width:18px;height:18px;border-radius:50%;border:0.5px solid var(--bd2);background:var(--bg2);color:var(--t3);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;padding:0}
+  .cf-rm:hover{background:var(--rd-bg);color:var(--rd-t);border-color:var(--rd-t)}
+  .cf-add-btn{font-size:10px;padding:3px 9px;border-radius:20px;border:0.5px dashed var(--bd2);background:transparent;color:var(--t3);cursor:pointer;transition:all .15s;white-space:nowrap}
+  .cf-add-btn:hover{border-color:#7a5500;color:#7a5500;background:var(--am-bg)}
+  .cf-empty{font-size:10px;color:var(--t3);font-style:italic;padding:2px 0}
+
   /* inline personal weight banner */
   .pw-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:7px 10px;background:var(--am-bg);border-radius:var(--rs);margin-bottom:.75rem}
   .pw-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--am-t);flex-shrink:0}
@@ -279,6 +302,15 @@
       <div class="preset-row" id="presets"></div>
       <div class="sec-lbl" style="margin-bottom:.75rem">Factor weights &nbsp;(0=ignore · 5=critical)</div>
       <div id="sliders"></div>
+      <div class="cf-divider">
+        <div class="cf-header">
+          <span class="sec-lbl" style="margin:0;color:#b07a00">Custom factors</span>
+          <button class="cf-add-btn" id="cf-add-btn" onclick="addCustomFactor()">+ Add factor</button>
+        </div>
+        <div class="cf-rows" id="cf-rows">
+          <div class="cf-empty" id="cf-empty">Up to 3 custom factors — applied to all schools</div>
+        </div>
+      </div>
     </div>
     <div class="card rp">
       <div class="rk-hdr">
@@ -291,6 +323,8 @@
 
   <div class="footer" id="footer">
     Default data: US News 2026 · NCES 2024–25 · Common Data Sets. AI-generated scores are approximate and for comparison only.
+    <br><br>
+    <button class="btn btn-ac" onclick="downloadCSV()" style="margin:0 auto;font-size:15px;padding:10px 22px;font-weight:700">⬇ Download results as CSV</button>
   </div>
 </div>
 
@@ -335,6 +369,7 @@ const TEMPLATE_CSV=[TPL_HDR,...TPL_ROWS].join('\n');
 let schools=DEFAULT_SCHOOLS.map(s=>({...s}));
 const weights={cost:4,academics:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2};
 let personalRatings={};  // { schoolName: { growth: null|1-5, comfort: null|1-5 } }
+let customScores={};     // { schoolName: { cfId: 1-5 } }
 let activePreset=0;
 let openSchool=null;
 
@@ -488,20 +523,31 @@ function sl(line){
 }
 function setUpSt(cls,msg){const el=document.getElementById('up-status');el.className='up-st '+cls;el.textContent=msg;}
 function resetData(){
-  schools=DEFAULT_SCHOOLS.map(s=>({...s}));openSchool=null;personalRatings={};
+  schools=DEFAULT_SCHOOLS.map(s=>({...s}));openSchool=null;personalRatings={};customScores={};customFactors=[];cfNextId=1;
   setUpSt('s-def','No file loaded');
   document.getElementById('reset-btn').style.display='none';
-  renderRanking();updateTag();
+  renderCustomFactors();renderRanking();updateTag();
 }
+
+let customFactors = []; // [{id, label, weight}]
+let cfNextId = 1;
+const CF_MAX = 3;
+
+/* ── Custom factor scores: stored per school per factor id */
+// customScores[schoolName][cfId] = 1-5 or null
 
 /* ── Scoring / rendering ── */
 function getPersonal(name,key){
   return (personalRatings[name]&&personalRatings[name][key]!=null)?personalRatings[name][key]:0;
 }
+function getCustomScore(name,cfId){
+  return (customScores[name]&&customScores[name][cfId]!=null)?customScores[name][cfId]:0;
+}
 function score(s){
   const base=FACTORS.reduce((t,f)=>t+(s.scores[f.key]||0)*weights[f.key],0);
   const personal=PERSONAL_FACTORS.reduce((t,f)=>t+getPersonal(s.name,f.key)*f.weight,0);
-  return base+personal;
+  const custom=customFactors.reduce((t,cf)=>t+getCustomScore(s.name,cf.id)*cf.weight,0);
+  return base+personal+custom;
 }
 
 function renderPresets(){
@@ -543,6 +589,50 @@ function adjPW(key,delta){
   document.getElementById('pwv-'+key).textContent=f.weight;
   renderRanking();
 }
+/* ── Custom factors ── */
+function renderCustomFactors(){
+  const container=document.getElementById('cf-rows');
+  const empty=document.getElementById('cf-empty');
+  const addBtn=document.getElementById('cf-add-btn');
+  empty.style.display=customFactors.length?'none':'';
+  addBtn.style.display=customFactors.length>=CF_MAX?'none':'';
+  const rows=customFactors.map(cf=>`
+    <div class="cf-row" id="cfrow-${cf.id}">
+      <input class="cf-name-inp" placeholder="Factor name…" value="${cf.label}"
+        oninput="updateCFLabel(${cf.id},this.value)" maxlength="28">
+      <input type="range" class="cf-slider" min="0" max="5" step="1" value="${cf.weight}"
+        oninput="updateCFWeight(${cf.id},+this.value)">
+      <span class="cf-val" id="cfv-${cf.id}">${cf.weight}</span>
+      <button class="cf-rm" onclick="removeCustomFactor(${cf.id})" title="Remove">&#215;</button>
+    </div>`).join('');
+  container.innerHTML=(customFactors.length?rows:'')+`<div class="cf-empty" id="cf-empty" style="display:${customFactors.length?'none':''}">Up to 3 custom factors — applied to all schools</div>`;
+  addBtn.style.display=customFactors.length>=CF_MAX?'none':'';
+}
+function addCustomFactor(){
+  if(customFactors.length>=CF_MAX)return;
+  customFactors.push({id:cfNextId++,label:'',weight:3});
+  renderCustomFactors();renderRanking();
+}
+function removeCustomFactor(id){
+  customFactors=customFactors.filter(cf=>cf.id!==id);
+  // clear scores for removed factor
+  Object.keys(customScores).forEach(name=>{ if(customScores[name]) delete customScores[name][id]; });
+  renderCustomFactors();renderRanking();
+}
+function updateCFLabel(id,val){
+  const cf=customFactors.find(c=>c.id===id);
+  if(cf){ cf.label=val; renderRanking(); }
+}
+function updateCFWeight(id,val){
+  const cf=customFactors.find(c=>c.id===id);
+  if(cf){ cf.weight=val; document.getElementById('cfv-'+id).textContent=val; renderRanking(); }
+}
+function setCustomScore(name,cfId,val){
+  if(!customScores[name]) customScores[name]={};
+  customScores[name][cfId]=(customScores[name][cfId]===val)?null:val;
+  renderRanking();
+}
+
 function renderRanking(){
   if(schools.length===0){
     document.getElementById('ranking').innerHTML=`<div style="text-align:center;padding:2rem 1rem;color:var(--t3);font-size:13px;line-height:1.7">
@@ -569,19 +659,28 @@ function renderRanking(){
     const pr=personalRatings[s.name]||{};
     const allRated=PERSONAL_FACTORS.every(f=>pr[f.key]!=null);
 
-    // always-visible rating strip
+    // always-visible rating strip (personal + custom)
     const LABELS=['','Strongly no','Probably not','Maybe','Probably yes','Strongly yes'];
-    const ratingStrip=`<div class="rating-strip">`+
-      PERSONAL_FACTORS.map(f=>{
-        const cur=(pr[f.key]!=null)?pr[f.key]:null;
-        const btns=[1,2,3,4,5].map(n=>`<button class="rs-btn${cur===n?' active':''}" onclick="event.stopPropagation();setRating('${sn}','${f.key}',${n})">${n}</button>`).join('');
-        const valTxt=cur?LABELS[cur]:'not rated';
-        return `<div class="rs-row">
-          <span class="rs-lbl"><span class="rs-icon">${f.icon}</span>${f.label}</span>
-          <div class="rs-btns">${btns}</div>
-          <span class="rs-val${cur?' rated':''}">${valTxt}</span>
-        </div>`;
-      }).join('')+`</div>`;
+    const cs=customScores[s.name]||{};
+    const personalRows=PERSONAL_FACTORS.map(f=>{
+      const cur=(pr[f.key]!=null)?pr[f.key]:null;
+      const btns=[1,2,3,4,5].map(n=>`<button class="rs-btn${cur===n?' active':''}" onclick="event.stopPropagation();setRating('${sn}','${f.key}',${n})">${n}</button>`).join('');
+      return `<div class="rs-row">
+        <span class="rs-lbl"><span class="rs-icon">${f.icon}</span>${f.label}</span>
+        <div class="rs-btns">${btns}</div>
+        <span class="rs-val${cur?' rated':''}">${cur?LABELS[cur]:'not rated'}</span>
+      </div>`;
+    }).join('');
+    const customRows=customFactors.filter(cf=>cf.label.trim()).map(cf=>{
+      const cur=(cs[cf.id]!=null)?cs[cf.id]:null;
+      const btns=[1,2,3,4,5].map(n=>`<button class="rs-btn${cur===n?' active':''}" onclick="event.stopPropagation();setCustomScore('${sn}',${cf.id},${n})">${n}</button>`).join('');
+      return `<div class="rs-row">
+        <span class="rs-lbl" style="color:var(--t2)">✦ ${cf.label}</span>
+        <div class="rs-btns">${btns}</div>
+        <span class="rs-val${cur?' rated':''}">${cur?LABELS[cur]:'not rated'}</span>
+      </div>`;
+    }).join('');
+    const ratingStrip=`<div class="rating-strip">${personalRows}${customRows}</div>`;
 
     return `<div class="school-row${isOpen?' open':''}">
       <div class="si" onclick="toggle('${sn}')">
@@ -613,7 +712,7 @@ function setRating(name,key,val){
 function toggle(name){openSchool=openSchool===name?null:name;renderRanking();}
 function updateTag(){document.getElementById('pg-tag').textContent=schools.length+' schools';}
 
-/* ── Template modal ── */
+updateTag();renderPresets();renderSliders();renderCustomFactors();renderRanking();
 function openModal(){document.getElementById('tpl-preview').textContent=TEMPLATE_CSV;document.getElementById('modal').classList.remove('hidden');}
 function closeModal(){document.getElementById('modal').classList.add('hidden');}
 function downloadTpl(){
@@ -622,7 +721,69 @@ function downloadTpl(){
   a.download='college-decision-template.csv';a.click();
 }
 
-updateTag();renderPresets();renderSliders();renderRanking();
+/* ── Download CSV ── */
+function esc(v){ const s=String(v==null?'':v); return (s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s; }
+
+function downloadCSV(){
+  if(!schools.length){ alert('No schools to export yet.'); return; }
+
+  const sorted=[...schools].sort((a,b)=>score(b)-score(a));
+  const LABELS=['','Strongly no','Probably not','Maybe','Probably yes','Strongly yes'];
+
+  // ── Build header
+  const stdHeaders  = FACTORS.map(f=>f.label);
+  const perHeaders  = PERSONAL_FACTORS.map(f=>f.label);
+  const cfHeaders   = customFactors.filter(cf=>cf.label.trim()).map(cf=>cf.label.trim());
+  const header = [
+    'Rank','School','Short Name','Badge','Note',
+    ...stdHeaders,
+    ...perHeaders,
+    ...cfHeaders,
+    'Total Score','Detail'
+  ];
+
+  // ── Weight row
+  const stdWeights  = FACTORS.map(f=>weights[f.key]);
+  const perWeights  = PERSONAL_FACTORS.map(f=>f.weight);
+  const cfWeights   = customFactors.filter(cf=>cf.label.trim()).map(cf=>cf.weight);
+  const weightRow = [
+    '(weight)','','','','',
+    ...stdWeights,
+    ...perWeights,
+    ...cfWeights,
+    '',''
+  ];
+
+  // ── Data rows
+  const dataRows = sorted.map((s,i)=>{
+    const pr = personalRatings[s.name]||{};
+    const cs = customScores[s.name]||{};
+    const stdScores = FACTORS.map(f=>s.scores[f.key]||'');
+    const perScores = PERSONAL_FACTORS.map(f=>{
+      const v=pr[f.key]; return v!=null?`${v} – ${LABELS[v]}`:'';
+    });
+    const cfScores = customFactors.filter(cf=>cf.label.trim()).map(cf=>{
+      const v=cs[cf.id]; return v!=null?`${v} – ${LABELS[v]}`:'';
+    });
+    return [
+      i+1, s.name, s.short, s.badge||'', s.note,
+      ...stdScores,
+      ...perScores,
+      ...cfScores,
+      score(s), s.detail||''
+    ];
+  });
+
+  const rows = [header, weightRow, ...dataRows];
+  const csv  = rows.map(r=>r.map(esc).join(',')).join('\n');
+  const ts   = new Date().toISOString().slice(0,10);
+  const a    = document.createElement('a');
+  a.href     = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = `bay-college-results-${ts}.csv`;
+  a.click();
+}
+
+
 </script>
 </body>
 </html>
