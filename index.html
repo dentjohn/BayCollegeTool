@@ -197,6 +197,20 @@
   .star-val{font-size:11px;color:var(--t3);margin-left:6px;min-width:50px}
   .star-unset{font-size:10px;color:var(--t3);font-style:italic}
 
+  /* factor tooltips */
+  .fr{position:relative}
+  .tip-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--bg3);border:0.5px solid var(--bd2);font-size:9px;color:var(--t3);cursor:default;flex-shrink:0;margin-left:3px;line-height:1;font-style:normal;transition:background .12s}
+  .tip-icon:hover{background:var(--ac);color:#fff;border-color:var(--ac)}
+  .tip-bubble{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:100;width:260px;background:var(--bg);border:0.5px solid var(--bd);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,0.15);padding:10px 12px;font-size:11px;color:var(--t2);line-height:1.5;pointer-events:none}
+  .fr:hover .tip-bubble,.tip-icon:focus + .tip-bubble{display:block}
+  .tip-bubble b{color:var(--t1);font-weight:600}
+  .tip-src{font-size:10px;color:var(--t3);margin-bottom:5px;font-style:italic}
+  .tip-how{margin-bottom:6px}
+  .tip-scale{border-top:0.5px solid var(--bd);padding-top:6px;display:flex;flex-direction:column;gap:2px}
+  .tip-row{display:flex;gap:5px}
+  .tip-score{font-weight:700;color:var(--ac);width:10px;flex-shrink:0}
+  .tip-desc{color:var(--t2)}
+
   .footer{margin:1.5rem auto 0;font-size:11px;color:var(--t3);text-align:center}
 
   /* student info panel */
@@ -415,17 +429,61 @@
 
 <script>
 const FACTORS=[
-  {key:'cost',label:'Affordable cost'},
-  {key:'academics',label:'Academic strength'},
-  {key:'academicFocus',label:'Academic focus match'},
-  {key:'classes',label:'Small classes'},
-  {key:'gradRate',label:'4-yr grad rate'},
-  {key:'safety',label:'Campus safety'},
-  {key:'housing',label:'Housing & food'},
-  {key:'diversity',label:'Diverse campus'},
-  {key:'spirit',label:'School spirit'},
-  {key:'weather',label:'Good weather'},
-  {key:'proximity',label:'Close to home'},
+  {key:'cost', label:'Affordable cost', tip:{
+    src:'NCES IPEDS · College Board · Net Price Calculators',
+    how:'Out-of-state cost of attendance adjusted for confirmed merit aid.',
+    scale:[['5','Under $30K/yr net — exceptional value'],['4','$30–45K/yr net'],['3','$45–65K/yr sticker'],['2','$65–80K/yr'],['1','Over $80K/yr — very expensive']]
+  }},
+  {key:'academics', label:'Academic strength', tip:{
+    src:'US News 2026 · Carnegie Classification · AAU membership',
+    how:'Weighted blend of national ranking tier, research output, AAU membership, and undergraduate academic rigor.',
+    scale:[['5','Top 25 national university / top 10 liberal arts'],['4','Top 50 national / top 25 liberal arts'],['3','Top 100 / solid regional reputation'],['2','Outside top 100 or regional focus'],['1','Limited national profile']]
+  }},
+  {key:'academicFocus', label:'Academic focus match', tip:{
+    src:'US News subject rankings · Princeton Review · NRC assessments',
+    how:'Scored for the student\'s selected major across: ranked programs, faculty depth, research opportunities, internship pipelines, and alumni outcomes. Defaults to 3 if no major selected.',
+    scale:[['5','Nationally recognized / top program for this major'],['4','Well-regarded with strong faculty and placement'],['3','Solid program — competent but not distinctively ranked'],['2','Below average — limited resources or faculty depth'],['1','Weak or no notable program in this field']]
+  }},
+  {key:'classes', label:'Small classes', tip:{
+    src:'Common Data Set (Section E) · US News student-faculty ratio',
+    how:'Student-to-faculty ratio and percentage of classes with fewer than 20 students.',
+    scale:[['5','≤8:1 ratio · 70%+ classes under 20 students'],['4','9–12:1 — strong faculty access'],['3','13–16:1 — moderate class sizes'],['2','17–20:1 — larger classes common'],['1','Over 20:1 — lecture-heavy']]
+  }},
+  {key:'gradRate', label:'4-yr grad rate', tip:{
+    src:'NCES IPEDS · Common Data Set (Section B)',
+    how:'Percentage of full-time first-time students who graduate within four years (not six).',
+    scale:[['5','85%+ four-year grad rate'],['4','75–84%'],['3','65–74% — national average'],['2','50–64% — many take 5–6 years'],['1','Under 50%']]
+  }},
+  {key:'safety', label:'Campus safety', tip:{
+    src:'Clery Act Annual Security Reports · ed.gov crime statistics',
+    how:'Federally mandated Clery Act crime disclosures normalized per 1,000 students, including surrounding neighborhood safety.',
+    scale:[['5','Very low crime · safe surrounding area'],['4','Below-average crime · generally secure'],['3','Average for a college campus'],['2','Above-average crime or higher-risk location'],['1','Elevated crime rates or significant concerns']]
+  }},
+  {key:'housing', label:'Housing & food', tip:{
+    src:'Princeton Review dorm & food rankings · Niche.com student surveys',
+    how:'Princeton Review student survey rankings for residence hall quality and campus food, supplemented by Niche satisfaction data.',
+    scale:[['5','Top 25 nationally for dorms and/or food'],['4','Above average — strong student satisfaction'],['3','Average — standard amenities'],['2','Below average — common complaints'],['1','Frequently cited as a weakness']]
+  }},
+  {key:'diversity', label:'Diverse campus', tip:{
+    src:'NCES IPEDS enrollment by race/ethnicity · Common Data Set (Section B)',
+    how:'Herfindahl-Hirschman diversity index applied to IPEDS enrollment data across racial/ethnic categories plus international student percentage.',
+    scale:[['5','High diversity — no single group over 45%'],['4','Above-average diversity'],['3','Moderate — some representation across groups'],['2','Below average — one group dominates'],['1','Low diversity']]
+  }},
+  {key:'spirit', label:'School spirit', tip:{
+    src:'Princeton Review surveys (athletics, Greek life) · Niche social life grades',
+    how:'Composite of Princeton Review student survey data on athletics culture, Greek life, campus events, and overall social satisfaction.',
+    scale:[['5','Vibrant D-I athletics · strong traditions · high engagement'],['4','Active campus life · strong student involvement'],['3','Moderate social scene'],['2','Quieter campus · commuter tendencies'],['1','Low social engagement']]
+  }},
+  {key:'weather', label:'Good weather', tip:{
+    src:'NOAA 30-year climate normals (1991–2020)',
+    how:'Average winter low temperature, annual sunshine hours, and days below freezing for the city nearest the campus.',
+    scale:[['5','Warm & sunny year-round (e.g. Southern CA, FL)'],['4','Mild · minimal harsh winters (e.g. Mid-Atlantic, CO)'],['3','Moderate — distinct seasons, manageable winters'],['2','Cold winters with significant snow or grey periods'],['1','Harsh climate (e.g. Rochester NY, northern New England)']]
+  }},
+  {key:'proximity', label:'Close to home', tip:{
+    src:'Google Maps distance from San Francisco, CA',
+    how:'Distance from San Francisco. Closer schools score higher, reflecting ease of visiting home.',
+    scale:[['5','Under 500 mi — drivable or short flight'],['4','500–1,500 mi — 1–2 hr flight'],['3','1,500–2,000 mi — 2–3 hr flight'],['2','2,000–2,800 mi — 4–5 hr flight'],['1','Over 2,800 mi — long flight']]
+  }},
 ];
 
 const PERSONAL_FACTORS=[
@@ -697,12 +755,21 @@ function renderPresets(){
 }
 function applyPreset(i){Object.assign(weights,PRESETS[i].w);activePreset=i;renderSliders();renderRanking();renderPresets();}
 function renderSliders(){
-  document.getElementById('sliders').innerHTML=FACTORS.map(f=>`
-    <div class="fr${weights[f.key]===0?' off':''}" id="fr-${f.key}">
-      <span class="fn">${f.label}</span>
+  document.getElementById('sliders').innerHTML=FACTORS.map(f=>{
+    const t=f.tip||{};
+    const scaleRows=(t.scale||[]).map(([s,d])=>`<div class="tip-row"><span class="tip-score">${s}</span><span class="tip-desc">${d}</span></div>`).join('');
+    const bubble=t.src?`<div class="tip-bubble">
+      <div class="tip-src">📌 ${t.src}</div>
+      <div class="tip-how">${t.how||''}</div>
+      <div class="tip-scale">${scaleRows}</div>
+    </div>`:'';
+    return `<div class="fr${weights[f.key]===0?' off':''}" id="fr-${f.key}">
+      <span class="fn">${f.label}</span>${t.src?`<span class="tip-icon">i</span>`:''}
+      ${bubble}
       <input type="range" min="0" max="5" step="1" value="${weights[f.key]}" oninput="onSlider('${f.key}',+this.value)">
       <span class="fv" id="fv-${f.key}">${weights[f.key]}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function onSlider(k,v){
   weights[k]=v;
