@@ -249,6 +249,80 @@
   .tour-icon{font-size:22px;margin-bottom:6px}
   .tour-trigger{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--ac);cursor:pointer;background:none;border:0.5px solid var(--ac);border-radius:20px;padding:4px 11px;transition:all .15s;white-space:nowrap}
   .tour-trigger:hover{background:var(--ac);color:#fff}
+  /* ── Print / Save as PDF ── */
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* Hide all interactive and nav elements */
+    .tour-overlay, .tour-trigger, #add-spinner,
+    .add-row, .add-err, .add-hint, .up-strip,
+    .preset-row, .drop-zone, #reset-btn,
+    .rm-btn, .cf-add-btn, .cf-rm,
+    .pw-dec, .pw-inc,
+    .tip-icon, .tip-bubble,
+    .footer, #major-rescore-banner,
+    input[type="range"], input[type="file"],
+    button:not(.rs-btn):not(.star-btn) { display: none !important; }
+
+    /* Page setup */
+    @page { margin: 1.5cm; size: A4 landscape; }
+    body { background: #fff !important; font-size: 11px; }
+    .wrap { max-width: 100% !important; padding: 0 !important; }
+
+    /* Header */
+    .pg-hdr { margin-bottom: 1rem !important; border-bottom: 2px solid #3C3489; padding-bottom: 0.75rem; }
+    .pg-title { font-size: 18px !important; }
+    .pg-sub { font-size: 11px !important; }
+    .tag { display: inline-block !important; }
+
+    /* Student info — compact */
+    .si-panel { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+    [style*="EFF6FF"] { background: #EFF6FF !important; padding: 0.75rem 1rem !important; }
+
+    /* Cards */
+    .card { border: 0.5px solid #ccc !important; box-shadow: none !important; break-inside: avoid; }
+    .add-panel { display: none !important; }
+
+    /* Two-column layout — stack for print */
+    .main { display: block !important; }
+    .lp { width: 100% !important; margin-bottom: 1rem !important; }
+    .rp { width: 100% !important; }
+
+    /* Left panel — show weights as text grid, no sliders */
+    .fr { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 0.5px solid #eee; }
+    .fn { font-size: 11px; flex: 1; }
+    .fv { font-weight: 700; color: #3C3489; font-size: 12px; }
+    .fr.off { opacity: 0.4; }
+    .cf-divider { margin-top: 0.5rem !important; padding-top: 0.5rem !important; }
+
+    /* Custom factor rows */
+    .cf-row { gap: 8px; }
+    .cf-name-inp { border: none; background: none; font-size: 11px; padding: 0; }
+    .cf-val { color: #3C3489; font-weight: 700; }
+
+    /* Ranking panel */
+    .school-row { break-inside: avoid; }
+    .si { padding: 6px 0 !important; }
+    .sname { font-size: 13px !important; }
+    .snote { font-size: 10px !important; }
+    .bpts { font-size: 11px !important; }
+    .bbg { height: 6px !important; }
+
+    /* Rating strip */
+    .rating-strip { background: none !important; border-top: 0.5px solid #eee; padding: 4px 0 !important; }
+    .rs-row { padding: 2px 0 !important; }
+    .rs-lbl { font-size: 10px !important; }
+    .rs-btn { width: 18px !important; height: 18px !important; font-size: 9px !important; }
+    .rs-val { font-size: 10px !important; }
+
+    /* Details panel */
+    .detail-panel { padding: 8px !important; font-size: 10px !important; background: #f9f9f9 !important; }
+
+    /* Footer watermark */
+    .print-footer { display: block !important; }
+  }
+  .print-footer { display: none; }
+
 </style>
 </head>
 <body>
@@ -475,7 +549,15 @@
   <div class="footer" id="footer">
     Default data: US News 2026 · NCES 2024–25 · Common Data Sets. AI-generated scores are approximate and for comparison only.
     <br><br>
-    <button class="btn btn-ac" id="tour-download" onclick="downloadCSV()" style="margin:0 auto;font-size:15px;padding:10px 22px;font-weight:700">⬇ Download results as CSV</button>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-ac" id="tour-download" onclick="downloadCSV()" style="font-size:15px;padding:10px 22px;font-weight:700">⬇ Download results as CSV</button>
+      <button class="btn" onclick="savePDF()" style="font-size:15px;padding:10px 22px;font-weight:700;background:var(--bg2);border-color:var(--bd2)">🖨 Save as PDF</button>
+    </div>
+  </div>
+
+  <!-- Print-only footer watermark -->
+  <div class="print-footer" style="margin-top:1rem;padding-top:0.5rem;border-top:1px solid #ccc;font-size:9px;color:#999;text-align:center">
+    Bay College Decision Tool (unofficial draft version) · Generated <span id="print-date"></span> · AI-generated scores are approximate and for comparison only.
   </div>
 </div>
 
@@ -1179,6 +1261,20 @@ window.addEventListener('resize', () => { if (tourActive) tourRender(); });
 window.addEventListener('scroll', () => { if (tourActive) tourRender(); }, { passive: true });
 
 
+
+/* ── Save as PDF ── */
+function savePDF(){
+  if(!schools.length){ alert('Add some schools first before saving as PDF.'); return; }
+  // Set print date
+  const d = new Date();
+  const dateStr = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const el = document.getElementById('print-date');
+  if(el) el.textContent = dateStr;
+  // Open all school rows so details are visible in print
+  const prevOpen = openSchool;
+  // Small delay to let DOM settle, then print
+  setTimeout(()=>{ window.print(); }, 80);
+}
 
 /* ── Download CSV ── */
 function esc(v){ const s=String(v==null?'':v); return (s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s; }
