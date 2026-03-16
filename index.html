@@ -318,7 +318,14 @@
     /* Details panel */
     .detail-panel { padding: 8px !important; font-size: 10px !important; background: #f9f9f9 !important; }
 
-    /* Footer watermark */
+    /* Narrative section */
+    #narrative-section { break-inside: avoid; border-color: #C4B5FD !important; }
+    #narrative-prompt-hint { display: none !important; }
+    #narrative-btn { display: none !important; }
+    #narrative-footer button { display: none !important; }
+    #narrative-output { font-size: 11px !important; }
+
+    /* Print-only footer watermark */
     .print-footer { display: block !important; }
   }
   .print-footer { display: none; }
@@ -543,6 +550,28 @@
         <div style="font-size:11px;color:var(--t3)">Rate each school · Hover to remove</div>
       </div>
       <div id="ranking"></div>
+    </div>
+  </div>
+
+  <!-- AI Narrative Section -->
+  <div class="card" id="narrative-section" style="margin-top:1.5rem;border-color:#86EFAC;background:#F0FDF4">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:0.9rem">
+      <div>
+        <div class="sec-lbl" style="color:#166534;margin-bottom:3px;font-size:13px">AI Narrative</div>
+        <div style="font-size:13px;font-weight:700;color:#166534;font-style:italic">Discuss actual results with Bay College Counseling</div>
+      </div>
+      <button class="btn" id="narrative-btn" onclick="generateNarrative()" style="font-size:13px;font-weight:700;padding:7px 16px;border-color:#86EFAC;color:#166534;background:#DCFCE7;white-space:nowrap;flex-shrink:0">✦ Generate summary</button>
+    </div>
+    <div id="narrative-prompt-hint" style="font-size:13px;font-weight:600;color:#166534;line-height:1.7;padding:14px 16px;background:#DCFCE7;border-radius:8px;border:0.5px dashed #86EFAC;text-align:center">
+      Add schools, adjust your factor weights, personal ratings, and custom factors — then click <strong>✦ Generate summary</strong> for a 1–2 paragraph AI narrative of your results.
+    </div>
+    <div id="narrative-loading" style="display:none;padding:20px;text-align:center;color:#166534;font-size:14px;font-weight:600">
+      <span class="spin"></span>&nbsp; Writing narrative…
+    </div>
+    <div id="narrative-output" style="display:none;font-size:14px;font-weight:600;color:#14532D;line-height:1.9"></div>
+    <div id="narrative-footer" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid #86EFAC;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span style="font-size:11px;color:#166534;font-style:italic;font-weight:600">⚠ AI-generated summary. Verify all data and discuss with your Bay College counselor before making decisions.</span>
+      <button class="btn btn-sm" onclick="generateNarrative()" style="color:#166534;border-color:#86EFAC;background:#DCFCE7;font-size:12px;font-weight:700">↺ Refresh</button>
     </div>
   </div>
 
@@ -1262,7 +1291,93 @@ window.addEventListener('scroll', () => { if (tourActive) tourRender(); }, { pas
 
 
 
-/* ── Save as PDF ── */
+/* ── AI Narrative ── */
+async function generateNarrative(){
+  if(!schools.length){ alert('Add at least one school before generating a narrative.'); return; }
+
+  const sorted=[...schools].sort((a,b)=>score(b)-score(a));
+  const major = getMajor();
+  const studentName = document.getElementById('si-name')?.value.trim() || 'The student';
+  const gradYear = document.getElementById('si-year')?.value || '';
+  const LABELS=['','Strongly no','Probably not','Maybe','Probably yes','Strongly yes'];
+
+  // Build a concise summary of the current state for Claude
+  const schoolSummaries = sorted.map((s,i)=>{
+    const sc = score(s);
+    const pr = personalRatings[s.name]||{};
+    const cs = customScores[s.name]||{};
+    const growth = pr.growth!=null ? LABELS[pr.growth] : 'not rated';
+    const comfort = pr.comfort!=null ? LABELS[pr.comfort] : 'not rated';
+    const cfRatings = customFactors.filter(cf=>cf.label.trim()).map(cf=>{
+      const v=cs[cf.id]; return `${cf.label}: ${v!=null?LABELS[v]:'not rated'}`;
+    }).join(', ');
+    const topFactors = FACTORS
+      .filter(f=>weights[f.key]>=3)
+      .sort((a,b)=>weights[b.key]-weights[a.key])
+      .slice(0,4)
+      .map(f=>`${f.label} ${s.scores[f.key]}/5`)
+      .join(', ');
+    return `#${i+1} ${s.name} (total: ${sc} pts) — ${s.note} | Key scores: ${topFactors} | Personal: growth=${growth}, comfort=${comfort}${cfRatings?' | Custom: '+cfRatings:''}`;
+  }).join('\n');
+
+  const activeWeights = FACTORS
+    .filter(f=>weights[f.key]>0)
+    .sort((a,b)=>weights[b.key]-weights[a.key])
+    .map(f=>`${f.label} (${weights[f.key]})`)
+    .join(', ');
+
+  const cfList = customFactors.filter(cf=>cf.label.trim()).map(cf=>`${cf.label} (weight ${cf.weight})`).join(', ');
+
+  const prompt = `You are a thoughtful, experienced college counselor writing a brief narrative summary for a student and their family reviewing their college comparison results.
+
+Student: ${studentName}${gradYear ? `, Class of ${gradYear}`:''}${major ? `, interested in ${major}`:''}
+
+Factor weights (what they care most about): ${activeWeights}${cfList ? `\nCustom factors: ${cfList}`:''}
+
+School rankings:
+${schoolSummaries}
+
+Write a 2-paragraph narrative summary (4–6 sentences each) in a warm, direct, counselor voice:
+- Paragraph 1: Summarize the overall ranking picture — which schools rose to the top and why, based on how the weights aligned with scores. Be specific about school names and standout factors.
+- Paragraph 2: Note any interesting patterns, tradeoffs, or observations — e.g. schools that scored high academically but low on fit, or where personal ratings diverged from AI scores. Mention the student by name. End with a gentle encouragement to discuss with their Bay School college counselor.
+
+Do NOT use bullet points. Do NOT use headers. Write in flowing prose only. Keep it under 200 words total.`;
+
+  // Show loading state
+  document.getElementById('narrative-prompt-hint').style.display='none';
+  document.getElementById('narrative-loading').style.display='block';
+  document.getElementById('narrative-output').style.display='none';
+  document.getElementById('narrative-footer').style.display='none';
+  document.getElementById('narrative-btn').disabled=true;
+
+  try{
+    const res = await fetch('/api/claude',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`Server error ${res.status}`); }
+    const data = await res.json();
+    const text = data.content?.find(b=>b.type==='text')?.text||'';
+
+    // Format paragraphs
+    const paras = text.trim().split(/\n\n+/).filter(Boolean);
+    const html = paras.map(p=>`<p style="margin:0 0 1em 0">${p.trim()}</p>`).join('');
+
+    document.getElementById('narrative-output').innerHTML=html;
+    document.getElementById('narrative-output').style.display='block';
+    document.getElementById('narrative-footer').style.display='flex';
+  }catch(err){
+    document.getElementById('narrative-output').innerHTML=`<span style="color:var(--rd-t)">Error generating narrative: ${err.message}</span>`;
+    document.getElementById('narrative-output').style.display='block';
+    document.getElementById('narrative-prompt-hint').style.display='block';
+  }finally{
+    document.getElementById('narrative-loading').style.display='none';
+    document.getElementById('narrative-btn').disabled=false;
+  }
+}
+
+
 function savePDF(){
   if(!schools.length){ alert('Add some schools first before saving as PDF.'); return; }
   // Set print date
