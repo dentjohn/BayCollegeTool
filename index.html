@@ -756,7 +756,7 @@ async function addSchool(){
     const res=await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name,major)}]})
+      body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name,major)}],max_tokens:2000})
     });
     if(!res.ok){
       const e=await res.json().catch(()=>({}));
@@ -876,7 +876,7 @@ async function batchLookup(names){
       const res=await fetch('/api/claude',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name,major)}]})
+        body:JSON.stringify({messages:[{role:'user',content:SCHOOL_PROMPT(name,major)}],max_tokens:2000})
       });
       if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`Server error ${res.status}`); }
       const data=await res.json();
@@ -1373,7 +1373,7 @@ Do NOT use bullet points. Do NOT use headers. Write in flowing prose only. Keep 
     const res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({messages:[{role:'user',content:prompt}]})
+      body: JSON.stringify({messages:[{role:'user',content:prompt}],max_tokens:600})
     });
     if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`Server error ${res.status}`); }
     const data = await res.json();
