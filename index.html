@@ -611,6 +611,11 @@ const FACTORS=[
     how:'Scored for the student\'s selected major across: ranked programs, faculty depth, research opportunities, internship pipelines, and alumni outcomes. Defaults to 3 if no major selected.',
     scale:[['5','Nationally recognized / top program for this major'],['4','Well-regarded with strong faculty and placement'],['3','Solid program — competent but not distinctively ranked'],['2','Below average — limited resources or faculty depth'],['1','Weak or no notable program in this field']]
   }},
+  {key:'learningServices', label:'Learning services', tip:{
+    src:'Peterson\'s Disability Services · Niche.com · College Confidential · institutional disability services pages',
+    how:'Evaluates the depth, quality, and student reviews of each school\'s Learning Differences / Disability Support Services program — including staffing, accommodations, specialized support, and student satisfaction.',
+    scale:[['5','Nationally recognized LD program · dedicated staff · proactive support · excellent reviews'],['4','Strong, well-resourced center · broad accommodations · positive student feedback'],['3','Standard disability services · typical accommodations · average reviews'],['2','Basic services · limited staff or resources · mixed student feedback'],['1','Minimal support · few resources · poor or no LD-specific programming']]
+  }},
   {key:'classes', label:'Small classes', tip:{
     src:'Common Data Set (Section E) · US News student-faculty ratio',
     how:'Student-to-faculty ratio and percentage of classes with fewer than 20 students.',
@@ -661,17 +666,17 @@ const PERSONAL_FACTORS=[
 ];
 
 const PRESETS=[
-  {label:'Balanced',   w:{cost:4,academics:4,academicFocus:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2}},
-  {label:'Value',      w:{cost:5,academics:3,academicFocus:3,classes:3,gradRate:4,safety:2,housing:2,diversity:2,spirit:2,weather:1,proximity:1}},
-  {label:'Academic',   w:{cost:2,academics:5,academicFocus:5,classes:5,gradRate:5,safety:3,housing:2,diversity:3,spirit:1,weather:1,proximity:1}},
-  {label:'Social',     w:{cost:2,academics:3,academicFocus:2,classes:2,gradRate:2,safety:4,housing:5,diversity:4,spirit:5,weather:4,proximity:3}},
-  {label:'Close home', w:{cost:3,academics:4,academicFocus:3,classes:3,gradRate:3,safety:3,housing:3,diversity:4,spirit:3,weather:4,proximity:5}},
+  {label:'Balanced',   w:{cost:4,academics:4,academicFocus:4,learningServices:3,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2}},
+  {label:'Value',      w:{cost:5,academics:3,academicFocus:3,learningServices:2,classes:3,gradRate:4,safety:2,housing:2,diversity:2,spirit:2,weather:1,proximity:1}},
+  {label:'Academic',   w:{cost:2,academics:5,academicFocus:5,learningServices:3,classes:5,gradRate:5,safety:3,housing:2,diversity:3,spirit:1,weather:1,proximity:1}},
+  {label:'Social',     w:{cost:2,academics:3,academicFocus:2,learningServices:2,classes:2,gradRate:2,safety:4,housing:5,diversity:4,spirit:5,weather:4,proximity:3}},
+  {label:'Close home', w:{cost:3,academics:4,academicFocus:3,learningServices:2,classes:3,gradRate:3,safety:3,housing:3,diversity:4,spirit:3,weather:4,proximity:5}},
 ];
 
 const DEFAULT_SCHOOLS=[];
 
 let schools=DEFAULT_SCHOOLS.map(s=>({...s}));
-const weights={cost:4,academics:4,academicFocus:4,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2};
+const weights={cost:4,academics:4,academicFocus:4,learningServices:3,classes:3,gradRate:3,safety:3,housing:3,diversity:3,spirit:3,weather:2,proximity:2};
 let lastScoredMajor=''; // track what major schools were scored with
 let personalRatings={};  // { schoolName: { growth: null|1-5, comfort: null|1-5 } }
 let customScores={};     // { schoolName: { cfId: 1-5 } }
@@ -693,6 +698,7 @@ const SCHOOL_PROMPT=(name,major)=>`You are a college data expert. Research "${na
     "cost": <1-5>,
     "academics": <1-5>,
     "academicFocus": <1-5>,
+    "learningServices": <1-5>,
     "classes": <1-5>,
     "gradRate": <1-5>,
     "safety": <1-5>,
@@ -706,6 +712,7 @@ const SCHOOL_PROMPT=(name,major)=>`You are a college data expert. Research "${na
     "cost": "1 sentence explaining the cost score with specific figures",
     "academics": "1 sentence explaining the academics score",
     "academicFocus": "1 sentence explaining the academic focus score for the given major",
+    "learningServices": "1 sentence explaining the quality and depth of learning differences/disability support services",
     "classes": "1 sentence with specific student-faculty ratio and class size data",
     "gradRate": "1 sentence with specific 4-year graduation rate",
     "safety": "1 sentence explaining the safety score",
@@ -721,6 +728,7 @@ Scoring (integers 1–5):
 - cost: 1=very expensive >$80K/yr sticker, 2=$65-80K, 3=$45-65K, 4=$30-45K net, 5=very affordable <$30K net
 - academics: US News rank + research quality (1=low, 5=top 25 national)
 - academicFocus: ${major ? `How strong is this school specifically for a student interested in "${major}"? Consider ranked programs, faculty, research, internship pipelines, and alumni outcomes in that field. (1=weak/no notable program, 3=solid program, 5=nationally recognized/top program for this major)` : `Leave as 3 (no major selected). Explanation: "No major selected — defaulted to neutral score."`}
+- learningServices: Depth, quality, and student reviews of Learning Differences / Disability Support Services. Consider: dedicated LD staff, breadth of accommodations, proactive vs. reactive support model, tutoring/coaching availability, and student satisfaction reviews from Niche, College Confidential, and Peterson's. (1=minimal/no LD support, 3=standard disability office, 5=nationally recognized LD program)
 - classes: student-faculty ratio + % classes under 20 (1=huge lectures, 5=very small)
 - gradRate: 4-year rate (1=<50%, 2=50-65%, 3=65-75%, 4=75-85%, 5=85%+)
 - safety: campus crime rates + location (1=high crime, 5=very safe)
@@ -758,7 +766,7 @@ async function addSchool(){
     const text=data.content?.find(b=>b.type==='text')?.text||'';
     const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
     if(parsed.error) throw new Error(parsed.error);
-    const sfs=['cost','academics','academicFocus','classes','gradRate','safety','housing','diversity','spirit','weather','proximity'];
+    const sfs=['cost','academics','academicFocus','learningServices','classes','gradRate','safety','housing','diversity','spirit','weather','proximity'];
     for(const f of sfs){
       const v=parseInt(parsed.scores?.[f]);
       if(isNaN(v)||v<1||v>5) throw new Error(`Invalid score for "${f}"`);
@@ -875,7 +883,7 @@ async function batchLookup(names){
       const text=data.content?.find(b=>b.type==='text')?.text||'';
       const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
       if(parsed.error) throw new Error(parsed.error);
-      const sfs=['cost','academics','academicFocus','classes','gradRate','safety','housing','diversity','spirit','weather','proximity'];
+      const sfs=['cost','academics','academicFocus','learningServices','classes','gradRate','safety','housing','diversity','spirit','weather','proximity'];
       for(const f of sfs){
         const v=parseInt(parsed.scores?.[f]);
         if(isNaN(v)||v<1||v>5) throw new Error(`Invalid score for "${f}"`);
@@ -1118,56 +1126,63 @@ const TOUR_STEPS = [
     target: 'tour-student',
     icon: '👤',
     title: 'Step 1 — Enter Your Student Info',
-    body: 'Start here. Enter the student\'s name, expected graduation year, and most importantly, their <strong>Academic Focus</strong>. This major selection directly affects how schools are scored for program strength.',
+    body: 'Start here. Enter the student\'s name, expected graduation year, and <strong>Academic Focus</strong>. The major you select directly changes how every school is scored for program strength — so set it before adding schools.',
     pos: 'below'
   },
   {
     target: 'tour-major',
     icon: '🎯',
-    title: 'Academic Focus Changes Everything',
-    body: 'Choosing a major here tells Claude to score each school on how strong its program is specifically for that field — faculty depth, rankings, internships, and alumni outcomes. If you change it later, you\'ll be prompted to re-score all schools.',
+    title: 'Academic Focus Changes the Scores',
+    body: 'Picking a major tells Claude to evaluate each school\'s program specifically in that field — ranked departments, faculty, research, internships, and alumni outcomes. If you change the major after schools are loaded, a yellow warning banner will appear prompting you to <strong>re-score all schools</strong> for the new selection.',
     pos: 'below'
   },
   {
     target: 'tour-addschool',
     icon: '🔍',
     title: 'Step 2 — Add Schools',
-    body: 'Type any college name and click <strong>Look up school</strong>. Claude researches and scores it automatically across all 11 factors in about 10–15 seconds. Add as many schools as you like.',
+    body: 'Type any college name and click <strong>Look up school</strong>. Claude automatically researches and scores it across all <strong>12 factors</strong> in about 10–15 seconds — including a one-sentence explanation for each score that will appear in your CSV export.',
     pos: 'below'
   },
   {
     target: 'tour-upload',
     icon: '📂',
     title: 'Or Upload a List',
-    body: 'Have a list already? Upload a CSV with a single column of school names — one per row with a header. Claude will look up and score all of them sequentially, showing progress as it goes.',
+    body: 'Have a list ready? Upload a CSV with a single column of school names (one per row, with a header). Claude looks up and scores all of them sequentially, showing live progress as it goes.',
     pos: 'above'
   },
   {
     target: 'tour-weights',
     icon: '⚖️',
     title: 'Step 3 — Adjust Factor Weights',
-    body: 'Use the sliders to set how much each factor matters to you — 0 means ignore it completely, 5 means it\'s critical. Use the <strong>Presets</strong> at the top for quick starting points like Academic, Value, or Social.',
+    body: 'Set how much each of the 12 factors matters — 0 means ignore it, 5 means critical. Use the <strong>Presets</strong> at the top for quick starting points. Hover the <strong>ⓘ</strong> icon next to any factor to see exactly how it\'s scored, what sources are used, and the full 1–5 scale definition.',
     pos: 'right'
   },
   {
     target: 'tour-custom',
     icon: '✦',
     title: 'Add Your Own Factors',
-    body: 'Have a factor that matters to your family that isn\'t in the list? Click <strong>+ Add factor</strong>, name it, and set a weight. You can add up to 3 custom factors and rate each school on them.',
+    body: 'Have a factor unique to your family\'s priorities? Click <strong>+ Add factor</strong>, name it, set a weight, and rate each school on it (1–5). Up to 3 custom factors can be added — they feed directly into the total score.',
     pos: 'right'
   },
   {
     target: 'tour-ranking',
     icon: '🏆',
     title: 'Step 4 — Review the Rankings',
-    body: 'Schools are ranked in real time based on all factor weights. Click any school row to expand its full details and program description. Use the <strong>personal rating buttons</strong> below each school to add your gut-feel scores — they feed into the total.',
+    body: 'Schools rank in real time as you adjust weights. Click any school to expand its full profile and description. Below each school are <strong>personal rating strips</strong> — rate how much you feel it will push you to grow, how comfortable it feels, plus any custom factors. These feed into the total score alongside the AI scores.',
     pos: 'left'
+  },
+  {
+    target: 'narrative-section',
+    icon: '✍️',
+    title: 'Step 5 — Generate an AI Narrative',
+    body: 'Once schools, weights, and ratings are set, click <strong>✦ Generate summary</strong> for a 1–2 paragraph counselor-style narrative of your results — what rose to the top, key tradeoffs, and patterns worth discussing. Hit <strong>↺ Refresh</strong> any time to regenerate. Always discuss the results with your Bay School college counselor.',
+    pos: 'above'
   },
   {
     target: 'tour-download',
     icon: '⬇️',
-    title: 'Step 5 — Download Your Results',
-    body: 'When you\'re done, download a complete CSV snapshot of your comparison — all schools, scores, weights, personal ratings, and custom factors included. Great for sharing with family or advisors.',
+    title: 'Step 6 — Save or Export Your Results',
+    body: '<strong>Download CSV</strong> exports a full spreadsheet — all schools, scores, weights, personal ratings, custom factors, and Claude\'s one-sentence explanation for every factor score. <strong>Save as PDF</strong> opens your browser\'s print dialog to capture a clean visual snapshot of the completed tool — great for sharing with family or your counselor.',
     pos: 'above',
     isLast: true
   }
